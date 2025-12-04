@@ -71,6 +71,7 @@ const Avatar = ({ imageUrl, userName, size = "w-8 h-8" }) => {
 const PendingTasksTable = ({ isCompact, filterTasks, type }) => {
   const tableHeaders = [
     { key: "col23", label: "Link With Name" },
+    { key: "col4", label: "Person Name" },
     { key: "col2", label: "FMS Name" },
     { key: "col3", label: "Task Name" },
     { key: "col9", label: "Pending Task" },
@@ -125,13 +126,18 @@ const PendingTasksTable = ({ isCompact, filterTasks, type }) => {
                         {task._fmsName || String(task[header.key] || "").trim() || "-"}
                       </span>
                     </div>
-                  ) : header.key === "col3" ? (
-                    <span className="text-gray-900 font-medium">
-                      {task._taskName || String(task[header.key] || "").trim() || "-"}
+                  ) : header.key === "col4" ? (
+                    <span className="text-gray-900">
+                      {task._personName || String(task[header.key] || "").trim() || "-"}
                     </span>
-                  ) : (
-                    String(task[header.key] || "").trim() || "-"
-                  )}
+                  )
+                    : header.key === "col3" ? (
+                      <span className="text-gray-900 font-medium">
+                        {task._taskName || String(task[header.key] || "").trim() || "-"}
+                      </span>
+                    ) : (
+                      String(task[header.key] || "").trim() || "-"
+                    )}
                 </td>
               ))}
             </tr>
@@ -153,7 +159,7 @@ const AdminPendingTasks = () => {
   const [dataSheetData, setDataSheetData] = useState([]);
 
   const DISPLAY_COLUMNS = ["col2", "col3", "col13", "col9"];
-  const SPREADSHEET_ID = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
+  const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
   const PENDING_TASK_COLUMN = "col9";
 
   const fetchDataSheet = async () => {
@@ -246,11 +252,12 @@ const AdminPendingTasks = () => {
         if (matchingDataItem) {
           itemObj._fmsName = String(matchingDataItem.col2 || "").trim();
           itemObj._taskName = String(matchingDataItem.col3 || "").trim();
+          itemObj._personName = String(matchingDataItem.col4 || "").trim(); // ✅ Ye add karo
         } else {
           itemObj._fmsName = String(itemObj.col2 || "").trim();
           itemObj._taskName = String(itemObj.col3 || "").trim();
+          itemObj._personName = String(itemObj.col4 || "").trim(); // ✅ Fallback
         }
-
         return itemObj;
       });
 
@@ -280,27 +287,28 @@ const AdminPendingTasks = () => {
     fetchPendingData();
   }, []);
 
-  const getPersonNamesWithImages = () => {
-    const personMap = new Map();
+ const getPersonNamesWithImages = () => {
+  const personMap = new Map();
 
-    pendingTasks.forEach((item) => {
-      const combinedValue = item._combinedValue;
-      if (combinedValue && combinedValue.trim() !== "") {
-        if (!personMap.has(combinedValue)) {
-          personMap.set(combinedValue, {
-            value: combinedValue,
-            displayName: item._userName || "User",
-            imageUrl: item._imageUrl,
-          });
-        }
+  pendingTasks.forEach((item) => {
+    // ✅ CHANGE: col4 se person name lena
+    const personName = item._personName || String(item.col4 || "").trim();
+    
+    if (personName && personName !== "") {
+      if (!personMap.has(personName)) {
+        personMap.set(personName, {
+          value: personName, // ✅ Person name ko value banayein
+          displayName: personName, // ✅ Person name ko displayName banayein
+          imageUrl: item._imageUrl || "", // Image agar hai to
+        });
       }
-    });
+    }
+  });
 
-    return Array.from(personMap.values()).sort((a, b) =>
-      a.displayName.localeCompare(b.displayName)
-    );
-  };
-
+  return Array.from(personMap.values()).sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
   const getFMSNames = () => {
     const fmsNames = new Set();
     pendingTasks.forEach((item) => {
@@ -313,31 +321,38 @@ const AdminPendingTasks = () => {
   };
 
   const filteredTasks = pendingTasks.filter((item) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = DISPLAY_COLUMNS.some((colId) => {
-      if (colId === "col2") {
-        return (item._fmsName || String(item[colId] || "")).toLowerCase().includes(term);
-      } else if (colId === "col3") {
-        return (item._taskName || String(item[colId] || "")).toLowerCase().includes(term);
-      } else {
-        return String(item[colId] || "").toLowerCase().includes(term);
-      }
-    });
-    const matchesFilter = filterValue
-      ? (filterType === "col2" ? (item._fmsName === filterValue) : item._combinedValue === filterValue)
-      : true;
-    return matchesSearch && matchesFilter;
+  const term = searchTerm.toLowerCase();
+  const matchesSearch = DISPLAY_COLUMNS.some((colId) => {
+    if (colId === "col2") {
+      return (item._fmsName || String(item[colId] || "")).toLowerCase().includes(term);
+    } else if (colId === "col3") {
+      return (item._taskName || String(item[colId] || "")).toLowerCase().includes(term);
+    } else {
+      return String(item[colId] || "").toLowerCase().includes(term);
+    }
   });
+  
+  // ✅ CHANGE: Filter type ko 'col4' pe set karna
+  const matchesFilter = filterValue
+    ? (filterType === "col2" 
+        ? (item._fmsName === filterValue) 
+        : (item._personName === filterValue)) // ✅ Person name se match
+    : true;
+    
+  return matchesSearch && matchesFilter;
+});
 
-  const handlePersonSelect = (person) => {
-    setFilterType("col23");
-    setFilterValue(person.value);
-    setShowPersonDropdown(false);
-  };
+// ✅ Dropdown selection handler
+const handlePersonSelect = (person) => {
+  setFilterType("col4"); // ✅ CHANGE: Type 'col4' set karna
+  setFilterValue(person.value);
+  setShowPersonDropdown(false);
+};
 
-  const selectedPerson = getPersonNamesWithImages().find(
-    (p) => p.value === filterValue
-  );
+// ✅ Selected person find karna
+const selectedPerson = getPersonNamesWithImages().find(
+  (p) => p.value === filterValue
+);
 
   return (
     <div className="space-y-4" style={{ height: "calc(110vh - 90px)", marginTop: "-40px" }}>
@@ -347,7 +362,7 @@ const AdminPendingTasks = () => {
         <h1 className="text-2xl font-bold text-gray-800">Pending Tasks</h1>
         <div className="text-sm bg-red-100 text-red-800 px-3 py-1 rounded-full">
           {filteredTasks.length} Pending Task
-          {filteredTasks.length !== 1 ? "s" : ""} (> 0)
+          {filteredTasks.length !== 1 ? "s" : ""}
         </div>
       </div>
 
@@ -488,7 +503,7 @@ const AdminPendingTasks = () => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
               <User className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500">No tasks with Pending Task > 0 match your current filters.</p>
+            <p className="text-gray-500">No tasks with Pending Task  0 match your current filters.</p>
           </div>
         </div>
       )}

@@ -74,7 +74,7 @@ const LoginPage = () => {
 
     try {
       // 1. Fetch authentication data from Master sheet
-      const sheetId = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
+      const sheetId = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
       const sheetName = "Master";
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
 
@@ -122,7 +122,7 @@ const LoginPage = () => {
         let processedImageUrl = null;
         
         try {
-          const perfSheetId = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
+          const perfSheetId = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
           const perfUrl = `https://docs.google.com/spreadsheets/d/${perfSheetId}/gviz/tq?tqx=out:json&sheet=For%20Records`;
           
           const perfResponse = await fetch(perfUrl);
@@ -218,10 +218,15 @@ const LoginPage = () => {
         className="relative z-10 w-full max-w-2xl min-h-[500px] bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden p-8 md:p-12"
       >
         <motion.div variants={fadeIn} className="max-w-md mx-auto w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800">Welcome Back</h2>
-            <p className="text-gray-600 text-sm mt-1">Please sign in to your account</p>
-          </div>
+          <div class="flex items-center justify-center gap-6 bg-orange-100 p-4 rounded-lg shadow-md h-28 sm:h-20">
+          <button class="bg-red-600 text-white px-6 py-3 text-lg font-semibold rounded-xl">
+            Zoff
+          </button>
+
+          <h2 class="text-2xl font-bold text-gray-900">
+            Inventory Management System
+          </h2>
+        </div>
 
           <AnimatePresence>
             {error && (
@@ -237,7 +242,7 @@ const LoginPage = () => {
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 mt-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Username

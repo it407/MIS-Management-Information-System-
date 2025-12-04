@@ -25,7 +25,7 @@ const CompleteKpiDashboard = () => {
   const abortControllerRef = useRef(null);
 
   // Google Sheets configuration - Dashboard sheet for both submit and fetch
-  const SPREADSHEET_ID = "1NuVFSLuUiOrcdfD2ISsmUh8PRV_IJUU_AyZDZiN11iY";
+  const SPREADSHEET_ID = "1sMwYAo58dN1icoR0db91wTbMD2CA7tEbl61jV6AKy6I";
   const SHEET_NAME = "Dashboard"; // Dashboard sheet for all operations
   
   // Restore data from localStorage on mount with user-specific keys

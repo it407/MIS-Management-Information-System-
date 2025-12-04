@@ -79,9 +79,9 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Configuration - exactly as provided
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbz6v_u383UiNmzJUG_VumT8Lq2gMPBxeZWAwtJas_K8ST7QwilMDu6YWuAqZNPbJxkF/exec";
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbxsivpBFRp-nkwL2tlmVRUNyW3U554AzguV3OQrYIjDBCh_G5cOG47_NWMHWOamOQY4/exec";
   const sheetName = "For Records";
-  // Sheet ID: 1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w (configured in Apps Script)
+  // Sheet ID: 1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM (configured in Apps Script)
 
   const filteredHeaders = dynamicHeaders.filter(
     (header) =>
@@ -95,7 +95,7 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
       const params = new URLSearchParams({
         action: 'getUsers',
         sheetName: sheetName,
-        spreadsheetId: "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w"
+        spreadsheetId: "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM"
       });
 
       console.log('Fetching commitments from:', `${scriptUrl}?${params}`);
@@ -162,6 +162,10 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
       } else {
         name = rawValue.trim();
       }
+
+      if (!name || name === "") {
+    name = item.col2 || "User";
+  }
 
       const nameKey = name.toLowerCase().trim();
       const existingCommitment = savedCommitments[nameKey] || "";
@@ -242,7 +246,7 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
       const formData = new URLSearchParams();
       formData.append('action', 'insertInSingleColumn');
       formData.append('sheetName', sheetName);
-      formData.append('spreadsheetId', "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w");
+      formData.append('spreadsheetId', "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM");
       formData.append('data', JSON.stringify(submittedData));
 
       console.log("Form data being sent:", formData.toString());
@@ -323,7 +327,25 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
 
   return (
     <div className="bg-white rounded-md border shadow-sm">
+          <div className="flex justify-end p-4">
+        <button
+          onClick={handleSubmit}
+          disabled={(!hasPlannedWorkInput && selectedIds.size === 0) || isSaving}
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {isSaving ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Saving...
+            </>
+          ) : (
+            "Submit Commitments"
+          )}
+        </button>
+      </div>
       {isLoading && <div className="p-4 text-center text-gray-500">Loading commitments...</div>}
+
+      
 
       {/* Fixed header container with scrollable body - scrollbar hidden */}
       <div className="overflow-hidden rounded-md">
@@ -499,22 +521,7 @@ const EmployeesTable = ({ filterTasks, dynamicHeaders }) => {
         </div>
       </div>
 
-      <div className="flex justify-end p-4">
-        <button
-          onClick={handleSubmit}
-          disabled={(!hasPlannedWorkInput && selectedIds.size === 0) || isSaving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isSaving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Saving...
-            </>
-          ) : (
-            "Submit Commitments"
-          )}
-        </button>
-      </div>
+  
     </div>
   );
 };

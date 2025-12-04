@@ -169,7 +169,7 @@ const AdminTodayTasks = () => {
   const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
   const DISPLAY_COLUMNS = ["col2", "col3", "col4", "col14"];
-  const SPREADSHEET_ID = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
+  const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
   // Column P (16th column, 0-indexed = col15) represents "Today Task"
   const TODAY_TASK_COLUMN = "col15";
 
@@ -240,27 +240,31 @@ const AdminTodayTasks = () => {
     fetchTodayData();
   }, []);
 
-  const getPersonNamesWithImages = () => {
-    const personMap = new Map();
+ const getPersonNamesWithImages = () => {
+  const personMap = new Map();
 
-    todayTasks.forEach((item) => {
-      const combinedValue = item._combinedValue;
-      if (combinedValue && combinedValue.trim() !== "") {
-        if (!personMap.has(combinedValue)) {
-          personMap.set(combinedValue, {
-            value: combinedValue,
-            // Show actual name if available, otherwise show "Unknown"
-            displayName: item._userName || "Unknown", 
-            imageUrl: item._imageUrl,
-          });
-        }
+  todayTasks.forEach((item) => {
+    // सिर्फ col4 से नाम लें
+    const name = String(item.col4 || "").trim();
+    const imageUrl = item._imageUrl || "";
+    
+    if (name && name !== "" && name !== "undefined" && name !== "null") {
+      const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+      
+      if (!personMap.has(name)) {
+        personMap.set(name, {
+          value: combinedValue,
+          displayName: name,
+          imageUrl: imageUrl,
+        });
       }
-    });
+    }
+  });
 
-    return Array.from(personMap.values()).sort((a, b) =>
-      a.displayName.localeCompare(b.displayName)
-    );
-  };
+  return Array.from(personMap.values()).sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
 
   const getFMSNames = () => {
     const fmsNames = new Set();
@@ -273,19 +277,32 @@ const AdminTodayTasks = () => {
     return Array.from(fmsNames).sort();
   };
 
-  const filteredTasks = todayTasks.filter((item) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = DISPLAY_COLUMNS.some((colId) =>
-      String(item[colId] || "")
-        .toLowerCase()
-        .includes(term)
-    );
-    const matchesFilter = filterValue
-      ? item._combinedValue === filterValue
-      : true;
-    return matchesSearch && matchesFilter;
-  });
+ const filteredTasks = todayTasks.filter((item) => {
+  const term = searchTerm.toLowerCase();
+  
+  // Search in all columns
+  const matchesSearch = Object.keys(item).some((key) =>
+    String(item[key] || "")
+      .toLowerCase()
+      .includes(term)
+  );
 
+  let matchesFilter = true;
+  if (filterValue) {
+    if (filterType === "col23") {
+      // अब col4 से फिल्टर करें
+      const itemName = String(item.col4 || "").trim();
+      const filterName = getPersonNamesWithImages().find(
+        (p) => p.value === filterValue
+      )?.displayName || "";
+      matchesFilter = itemName === filterName;
+    } else if (filterType === "col2") {
+      matchesFilter = item.col2 === filterValue;
+    }
+  }
+
+  return matchesSearch && matchesFilter;
+});
   const handlePersonSelect = (person) => {
     setFilterType("col23");
     setFilterValue(person.value);
@@ -317,7 +334,7 @@ const AdminTodayTasks = () => {
         <h1 className="text-2xl font-bold text-gray-800">Today Tasks</h1>
         <div className="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
           {filteredTasks.length} Today Task
-          {filteredTasks.length !== 1 ? "s" : ""} (> 0)
+          {filteredTasks.length !== 1 ? "s" : ""} 
         </div>
       </div>
 
@@ -456,7 +473,7 @@ const AdminTodayTasks = () => {
         </div>
       ) : (
         <div className="bg-white rounded-lg border shadow-sm p-6 text-center">
-          <p className="text-gray-500">No tasks with Today Task > 0 match your current filters.</p>
+          <p className="text-gray-500">No tasks with Today Task  0 match your current filters.</p>
         </div>
       )}
     </div>

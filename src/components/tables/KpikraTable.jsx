@@ -10,7 +10,7 @@ const KpikraTable = ({ designation, isAdmin = false, isEmpty = false }) => {
   const abortControllerRef = useRef(null);
 
   // Update with your new spreadsheet ID and sheet name
-  const SPREADSHEET_ID = "1NuVFSLuUiOrcdfD2ISsmUh8PRV_IJUU_AyZDZiN11iY";
+  const SPREADSHEET_ID = "1sMwYAo58dN1icoR0db91wTbMD2CA7tEbl61jV6AKy6I";
   const SHEET_NAME = "Dashboard"; // Fixed sheet name - change this to your actual sheet name
 
   const fetchPendingData = useCallback(async (designationToFetch) => {
@@ -57,13 +57,7 @@ const KpikraTable = ({ designation, isAdmin = false, isEmpty = false }) => {
         return itemObj;
       });
 
-      // Filter data based on designation if needed
-      // If you need to filter by designation, uncomment and modify this:
-      // const filteredItems = items.filter(item => 
-      //   item.col0 === designationToFetch || // Adjust column index as needed
-      //   item.col1 === designationToFetch    // Check multiple columns if needed
-      // );
-      
+     
       setPendingTasks(items);
     } catch (err) {
       if (err.name !== 'AbortError') {

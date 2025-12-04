@@ -50,8 +50,8 @@ const AdminDashboard = () => {
     "col13", "col2", "col3", "col4", "col5", "col6", "col7",
     "col8", "col9", "col10", "col11", "col12", "col14", "col15"
   ];
-  const SPREADSHEET_ID = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6v_u383UiNmzJUG_VumT8Lq2gMPBxeZWAwtJas_K8ST7QwilMDu6YWuAqZNPbJxkF/exec";
+  const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsivpBFRp-nkwL2tlmVRUNyW3U554AzguV3OQrYIjDBCh_G5cOG47_NWMHWOamOQY4/exec";
   const DEPARTMENT_CHART_ID = "1932717403";
 
   // Generate the department chart URL
@@ -115,6 +115,7 @@ const AdminDashboard = () => {
       const PROGRESS_COLUMNS = ["col5", "col6", "col10", "col11"];
       const IMAGE_COLUMNS = ["col13"];
       const COMMITMENT_COLUMNS = ["col14"];
+      const NAME_COLUMNS = ["col2"];
 
       const headers = data.table.cols.map((col, index) => {
         const columnId = `col${index}`;
@@ -123,13 +124,15 @@ const AdminDashboard = () => {
           (typeof sampleValue === "string" && sampleValue.includes("%"));
         const isImage = IMAGE_COLUMNS.includes(columnId);
         const isCommitment = COMMITMENT_COLUMNS.includes(columnId);
+        const isName = NAME_COLUMNS.includes(columnId); 
 
         return {
           id: columnId,
           label: col.label || `Column ${index + 1}`,
           isProgress,
           isImage,
-          isCommitment
+          isCommitment,
+          isName 
         };
       });
 
@@ -338,6 +341,15 @@ const AdminDashboard = () => {
                 List of People ({filteredDashboard.length})
               </h2>
             </div>
+            <div className="mb-4">
+  <input
+    type="text"
+    placeholder="Search by name, department, task..."
+    className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
             <div className="relative h-[calc(100vh-300px)] overflow-hidden">
               <div className="absolute inset-0 overflow-y-auto">
                 <EmployeesTable

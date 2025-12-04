@@ -10,7 +10,7 @@ const VerticalBarChart = ({ title = "Vertical Bar Chart" }) => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          "https://docs.google.com/spreadsheets/d/1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w/gviz/tq?tqx=out:json&sheet=Department Score Graph"
+          "https://docs.google.com/spreadsheets/d/1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM/gviz/tq?tqx=out:json&sheet=Department Score Graph"
         );
         const text = await response.text();
 

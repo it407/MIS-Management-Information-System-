@@ -20,7 +20,7 @@ const DepartmentScores = () => {
   const [graphImage, setGraphImage] = useState(null); // ✅ NEW STATE
 
   const GOOGLE_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbz6v_u383UiNmzJUG_VumT8Lq2gMPBxeZWAwtJas_K8ST7QwilMDu6YWuAqZNPbJxkF/exec";
+    "https://script.google.com/macros/s/AKfycbxsivpBFRp-nkwL2tlmVRUNyW3U554AzguV3OQrYIjDBCh_G5cOG47_NWMHWOamOQY4/exec";
 
   const processChartData = (rawData) => {
     if (!rawData || rawData.length < 2) return [];

@@ -130,7 +130,7 @@ const HistoryCommitment = () => {
     const [error, setError] = useState(null);
     const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
-    const SPREADSHEET_ID = "1PV7EKhdGns0Xl9nh4lgZqWTIWXGaFzpSxC2hGA2IB_w";
+    const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
 
     // Sample data for demonstration
     const sampleData = [
@@ -189,7 +189,8 @@ const HistoryCommitment = () => {
 
     // Column mapping with optimized widths
     const COLUMN_MAPPING = [
-        { index: 13, label: "Employee", key: "linkWithName", width: "200px" },
+        // { index: 13, label: "Employee", key: "linkWithName", width: "200px" },
+        { index: 2 , label: "Name", key: "name", width: "200px" },
         { index: 3, label: "Target", key: "target", width: "120px" },
         { index: 4, label: "Actual Work Done", key: "actualWorkDone", width: "150px" },
         { index: 5, label: "% Work Not Done", key: "workNotDone", width: "140px" },
@@ -289,27 +290,30 @@ const HistoryCommitment = () => {
 
     // Get unique employee names with images for dropdown
     const getEmployeeNamesWithImages = () => {
-        const employeeMap = new Map();
+    const employeeMap = new Map();
 
-        dashboardTasks.forEach((item) => {
-            const combinedValue = item._combinedValue;
-            if (combinedValue && combinedValue.trim() !== "") {
-                if (!combinedValue.includes("undefined") && !combinedValue.includes("null")) {
-                    if (!employeeMap.has(combinedValue)) {
-                        employeeMap.set(combinedValue, {
-                            value: combinedValue,
-                            displayName: item._userName || "Employee",
-                            imageUrl: item._imageUrl,
-                        });
-                    }
-                }
+    dashboardTasks.forEach((item) => {
+        // सिर्फ "name" कॉलम से नाम लें (index: 2)
+        const name = String(item.name || "").trim();
+        const imageUrl = item._imageUrl || "";
+        
+        if (name && name !== "" && name !== "undefined" && name !== "null") {
+            const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+            
+            if (!employeeMap.has(name)) {
+                employeeMap.set(name, {
+                    value: combinedValue,
+                    displayName: name,
+                    imageUrl: imageUrl,
+                });
             }
-        });
+        }
+    });
 
-        return Array.from(employeeMap.values()).sort((a, b) =>
-            a.displayName.localeCompare(b.displayName)
-        );
-    };
+    return Array.from(employeeMap.values()).sort((a, b) =>
+        a.displayName.localeCompare(b.displayName)
+    );
+};
 
     // Get unique targets for filter
     const getTargets = () => {
@@ -325,32 +329,37 @@ const HistoryCommitment = () => {
 
     // Filter tasks based on search and filters
     const filteredTasks = dashboardTasks.filter((item) => {
-        const term = searchTerm.toLowerCase();
-        const matchesSearch = Object.values(item).some(value =>
-            String(value || "").toLowerCase().includes(term)
-        );
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = Object.values(item).some(value =>
+        String(value || "").toLowerCase().includes(term)
+    );
 
-        let matchesFilter = true;
-        if (filterValue) {
-            if (filterType === "linkWithName") {
-                matchesFilter = item._combinedValue === filterValue;
-            } else if (filterType === "target") {
-                matchesFilter = item.target === filterValue;
-            }
+    let matchesFilter = true;
+    if (filterValue) {
+        if (filterType === "linkWithName") {
+            // सिर्फ नाम से मिलान करें
+            const itemName = String(item.name || "").trim();
+            const filterName = getEmployeeNamesWithImages().find(
+                emp => emp.value === filterValue
+            )?.displayName || "";
+            matchesFilter = itemName === filterName;
+        } else if (filterType === "target") {
+            matchesFilter = item.target === filterValue;
         }
+    }
 
-        return matchesSearch && matchesFilter;
-    });
+    return matchesSearch && matchesFilter;
+});
 
     const handleEmployeeSelect = (employee) => {
-        setFilterType("linkWithName");
-        setFilterValue(employee.value);
-        setShowPersonDropdown(false);
-    };
+    setFilterType("linkWithName");
+    setFilterValue(employee.value);
+    setShowPersonDropdown(false);
+};
 
-    const selectedEmployee = getEmployeeNamesWithImages().find(
-        (emp) => emp.value === filterValue
-    );
+const selectedEmployee = getEmployeeNamesWithImages().find(
+    (emp) => emp.value === filterValue
+);
 
     if (isLoading) {
         return (

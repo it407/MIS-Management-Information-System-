@@ -151,6 +151,7 @@ const TodayTasksTable = ({
 
   const staticHeaders = [
     { id: "col13", label: "Link With Name" },
+    { id: "col4", label: "Name" },
     { id: "col2", label: "Fms Name" },
     { id: "col3", label: "Task Name" },
     { id: "col15", label: "Today Task" },
