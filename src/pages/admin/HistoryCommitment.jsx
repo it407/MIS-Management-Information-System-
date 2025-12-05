@@ -1,57 +1,5 @@
 
-    const sampleData = [
-        {
-            _id: "1",
-            _rowIndex: 1,
-            linkWithName: "https://example.com/image1.jpg,John Doe",
-            _imageUrl: "https://example.com/image1.jpg",
-            _userName: "John Doe",
-            _combinedValue: "https://example.com/image1.jpg,John Doe",
-            target: "100",
-            actualWorkDone: "85",
-            workNotDone: "15%",
-            workNotDoneOnTime: "25%",
-            totalWorkDone: "85",
-            weekPending: "15",
-            plannedWorkNotDone: "10%",
-            plannedWorkNotDoneOnTime: "20%",
-            nextWeekCommitment: "Complete remaining tasks"
-        },
-        {
-            _id: "2",
-            _rowIndex: 2,
-            linkWithName: "Jane Smith",
-            _imageUrl: "",
-            _userName: "Jane Smith",
-            _combinedValue: "Jane Smith",
-            target: "120",
-            actualWorkDone: "110",
-            workNotDone: "8%",
-            workNotDoneOnTime: "12%",
-            totalWorkDone: "110",
-            weekPending: "10",
-            plannedWorkNotDone: "5%",
-            plannedWorkNotDoneOnTime: "8%",
-            nextWeekCommitment: "Focus on quality improvement"
-        },
-        {
-            _id: "3",
-            _rowIndex: 3,
-            linkWithName: "Mike Johnson",
-            _imageUrl: "",
-            _userName: "Mike Johnson",
-            _combinedValue: "Mike Johnson",
-            target: "90",
-            actualWorkDone: "75",
-            workNotDone: "17%",
-            workNotDoneOnTime: "30%",
-            totalWorkDone: "75",
-            weekPending: "15",
-            plannedWorkNotDone: "12%",
-            plannedWorkNotDoneOnTime: "15%",
-            nextWeekCommitment: "Prioritize pending items"
-        }
-    ];import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { User } from "lucide-react";
 
@@ -59,6 +7,7 @@ const ImgWithFallback = ({ src, alt, name, fallbackElement, className }) => {
     const [imgSrc, setImgSrc] = useState("");
     const [loadFailed, setLoadFailed] = useState(false);
     const [attempts, setAttempts] = useState(0);
+
 
     const getDriveImageUrls = (originalUrl) => {
         if (!originalUrl || typeof originalUrl !== "string") return [];
@@ -130,62 +79,12 @@ const HistoryCommitment = () => {
     const [error, setError] = useState(null);
     const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
+
+    const [employeeSearchTerm, setEmployeeSearchTerm] = useState(""); 
+
     const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
 
     // Sample data for demonstration
-    const sampleData = [
-        {
-            _id: "1",
-            _rowIndex: 1,
-            linkWithName: "https://example.com/image1.jpg,John Doe",
-            _imageUrl: "https://example.com/image1.jpg",
-            _userName: "John Doe",
-            _combinedValue: "https://example.com/image1.jpg,John Doe",
-            target: "100",
-            actualWorkDone: "85",
-            workNotDone: "15%",
-            workNotDoneOnTime: "25%",
-            totalWorkDone: "85",
-            weekPending: "15",
-            plannedWorkNotDone: "10%",
-            plannedWorkNotDoneOnTime: "20%",
-            nextWeekCommitment: "Complete remaining tasks"
-        },
-        {
-            _id: "2",
-            _rowIndex: 2,
-            linkWithName: "Jane Smith",
-            _imageUrl: "",
-            _userName: "Jane Smith",
-            _combinedValue: "Jane Smith",
-            target: "120",
-            actualWorkDone: "110",
-            workNotDone: "8%",
-            workNotDoneOnTime: "12%",
-            totalWorkDone: "110",
-            weekPending: "10",
-            plannedWorkNotDone: "5%",
-            plannedWorkNotDoneOnTime: "8%",
-            nextWeekCommitment: "Focus on quality improvement"
-        },
-        {
-            _id: "3",
-            _rowIndex: 3,
-            linkWithName: "Mike Johnson",
-            _imageUrl: "",
-            _userName: "Mike Johnson",
-            _combinedValue: "Mike Johnson",
-            target: "90",
-            actualWorkDone: "75",
-            workNotDone: "17%",
-            workNotDoneOnTime: "30%",
-            totalWorkDone: "75",
-            weekPending: "15",
-            plannedWorkNotDone: "12%",
-            plannedWorkNotDoneOnTime: "15%",
-            nextWeekCommitment: "Prioritize pending items"
-        }
-    ];
 
     // Column mapping with optimized widths
     const COLUMN_MAPPING = [
@@ -327,6 +226,42 @@ const HistoryCommitment = () => {
         return Array.from(targets).sort();
     };
 
+
+    const getFilteredEmployeeNames = () => {
+    const employeeMap = new Map();
+    
+    dashboardTasks.forEach((item) => {
+        const name = String(item.name || "").trim();
+        const imageUrl = item._imageUrl || "";
+        
+        if (name && name !== "" && name !== "undefined" && name !== "null") {
+            const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+            
+            if (!employeeMap.has(name)) {
+                employeeMap.set(name, {
+                    value: combinedValue,
+                    displayName: name,
+                    imageUrl: imageUrl,
+                });
+            }
+        }
+    });
+    
+    const employees = Array.from(employeeMap.values()).sort((a, b) =>
+        a.displayName.localeCompare(b.displayName)
+    );
+    
+    // Employee search filter apply करें
+    if (employeeSearchTerm.trim() === "") {
+        return employees;
+    }
+    
+    const searchTerm = employeeSearchTerm.toLowerCase();
+    return employees.filter(employee =>
+        employee.displayName.toLowerCase().includes(searchTerm)
+    );
+};
+
     // Filter tasks based on search and filters
     const filteredTasks = dashboardTasks.filter((item) => {
     const term = searchTerm.toLowerCase();
@@ -355,6 +290,7 @@ const HistoryCommitment = () => {
     setFilterType("linkWithName");
     setFilterValue(employee.value);
     setShowPersonDropdown(false);
+    setEmployeeSearchTerm("");
 };
 
 const selectedEmployee = getEmployeeNamesWithImages().find(
@@ -414,7 +350,12 @@ const selectedEmployee = getEmployeeNamesWithImages().find(
         <div className="relative">
             <div
                 className="border px-3 py-2 rounded w-full focus:ring-green-500 focus:border-green-500 bg-white cursor-pointer flex justify-between items-center"
-                onClick={() => setShowPersonDropdown(!showPersonDropdown)}
+                onClick={() => {
+        setShowPersonDropdown(!showPersonDropdown);
+        if (!showPersonDropdown) {
+            setEmployeeSearchTerm(""); // Open होने पर search clear करें
+        }
+    }}
             >
                 {selectedEmployee ? (
                     <div className="flex items-center">
@@ -459,49 +400,75 @@ const selectedEmployee = getEmployeeNamesWithImages().find(
                 </svg>
             </div>
 
-            {showPersonDropdown && (
-                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                    <div
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleEmployeeSelect({
-                            value: "",
-                            displayName: "All Employees",
-                        })}
-                    >
-                        All Employees
-                    </div>
-                    {getEmployeeNamesWithImages().map((employee) => (
-                        <div
-                            key={employee.value}
-                            className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                            onClick={() => handleEmployeeSelect(employee)}
-                        >
-                            {employee.imageUrl ? (
-                                <ImgWithFallback
-                                    src={employee.imageUrl}
-                                    alt={employee.displayName}
-                                    name={employee.displayName}
-                                    className="w-6 h-6 rounded-full mr-2"
-                                    fallbackElement={
-                                        <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                                            <span className="text-xs">
-                                                {employee.displayName?.charAt(0) || "?"}
-                                            </span>
-                                        </div>
-                                    }
-                                />
-                            ) : (
+         {showPersonDropdown && (
+    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+        {/* Search Input in Dropdown */}
+        <div className="sticky top-0 bg-white p-2 border-b z-20">
+            <input
+                type="text"
+                placeholder="Search employees..."
+                className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                onClick={(e) => e.stopPropagation()}
+                value={employeeSearchTerm}
+                onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                autoFocus
+            />
+        </div>
+        
+        <div
+            className="p-2 hover:bg-gray-100 cursor-pointer"
+            onClick={() => {
+                handleEmployeeSelect({
+                    value: "",
+                    displayName: "All Employees",
+                });
+                setEmployeeSearchTerm(""); // Search clear करें
+            }}
+        >
+            All Employees
+        </div>
+        
+        {getFilteredEmployeeNames().length > 0 ? (
+            getFilteredEmployeeNames().map((employee) => (
+                <div
+                    key={employee.value}
+                    className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                    onClick={() => {
+                        handleEmployeeSelect(employee);
+                        setEmployeeSearchTerm(""); // Search clear करें
+                    }}
+                >
+                    {employee.imageUrl ? (
+                        <ImgWithFallback
+                            src={employee.imageUrl}
+                            alt={employee.displayName}
+                            name={employee.displayName}
+                            className="w-6 h-6 rounded-full mr-2"
+                            fallbackElement={
                                 <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                                    <span className="text-sm">
+                                    <span className="text-xs">
                                         {employee.displayName?.charAt(0) || "?"}
                                     </span>
                                 </div>
-                            )}
-                            <span>{employee.displayName}</span>
+                            }
+                        />
+                    ) : (
+                        <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                            <span className="text-sm">
+                                {employee.displayName?.charAt(0) || "?"}
+                            </span>
                         </div>
-                    ))}
+                    )}
+                    <span className="truncate">{employee.displayName}</span>
                 </div>
-            )}
+            ))
+        ) : (
+            <div className="p-4 text-center text-gray-500">
+                No employees found for "{employeeSearchTerm}"
+            </div>
+        )}
+    </div>
+)}
         </div>
     </div>
 </div>

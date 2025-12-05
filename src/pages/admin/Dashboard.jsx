@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { Download } from "lucide-react";
+import { Download, Calendar } from "lucide-react";
 import {
   getTopScorers,
   getLowestScorers,
@@ -39,6 +39,14 @@ const AdminDashboard = () => {
   const [selectedItems, setSelectedItems] = useState({});
   const [commitments, setCommitments] = useState({});
   const [departmentChartUrl, setDepartmentChartUrl] = useState("");
+
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isSubmittingDates, setIsSubmittingDates] = useState(false);
+
+
+
 
 
   // Configuration constants
@@ -124,7 +132,7 @@ const AdminDashboard = () => {
           (typeof sampleValue === "string" && sampleValue.includes("%"));
         const isImage = IMAGE_COLUMNS.includes(columnId);
         const isCommitment = COMMITMENT_COLUMNS.includes(columnId);
-        const isName = NAME_COLUMNS.includes(columnId); 
+        const isName = NAME_COLUMNS.includes(columnId);
 
         return {
           id: columnId,
@@ -132,7 +140,7 @@ const AdminDashboard = () => {
           isProgress,
           isImage,
           isCommitment,
-          isName 
+          isName
         };
       });
 
@@ -230,15 +238,185 @@ const AdminDashboard = () => {
   }, []);
 
   // Filter dashboard based on search term
-  const filteredDashboard = dashboardTasks.filter((item) => {
-    const term = searchTerm.toLowerCase();
-    return DISPLAY_COLUMNS.some((colId) => {
-      const value = item[colId];
-      if (colId === "col13") return true; // Always show images
-      return value && String(value).toLowerCase().includes(term);
+  const filteredDashboard = React.useMemo(() => {
+    console.log("Search term:", searchTerm);
+    console.log("Total items:", dashboardTasks.length);
+
+    if (!searchTerm || searchTerm.trim() === "") {
+      console.log("No search term, showing all items");
+      return dashboardTasks;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    console.log("Searching for:", term);
+
+    const result = dashboardTasks.filter((item) => {
+      // Check each display column
+      for (const colId of DISPLAY_COLUMNS) {
+        const value = item[colId];
+
+        if (value == null) continue;
+
+        const stringValue = String(value).toLowerCase();
+
+        // Special handling for col13 (image column)
+        if (colId === "col13") {
+          // If format is "image_url, Name"
+          if (stringValue.includes(",")) {
+            const namePart = stringValue.split(",")[1]?.trim();
+            if (namePart && namePart.includes(term)) {
+              console.log("Found in col13 name part:", namePart);
+              return true;
+            }
+          }
+        }
+
+        // Normal search
+        if (stringValue.includes(term)) {
+          console.log(`Found in ${colId}:`, value);
+          return true;
+        }
+      }
+
+      return false;
     });
-  });
-  console.log(filteredDashboard, "jkjk")
+
+    console.log("Filtered result count:", result.length);
+    return result;
+  }, [dashboardTasks, searchTerm]);
+
+
+
+
+  // const submitDates = async () => {
+  //   if (!startDate || !endDate) {
+  //     toast.error("Please select both start and end dates");
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsSubmittingDates(true);
+
+  //     // Format dates to YYYY-MM-DD
+  //     const formatDate = (dateString) => {
+  //       const date = new Date(dateString);
+  //       const day = String(date.getDate()).padStart(2, '0');
+  // const month = date.toLocaleString('en-US', { month: 'short' });
+  // const year = date.getFullYear();
+  //       return `${day}-${month}-${year}`;
+  //     };
+
+  //     const formattedStartDate = formatDate(startDate);
+  //     const formattedEndDate = formatDate(endDate);
+
+  //     console.log("Submitting dates:", { formattedStartDate, formattedEndDate });
+
+  //     // Submit dates to "Report" sheet
+  //     const response = await fetch(APPS_SCRIPT_URL, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/x-www-form-urlencoded',
+  //       },
+  //       body: new URLSearchParams({
+  //         action: 'submitDates',
+  //         spreadsheetId: SPREADSHEET_ID,
+  //         sheetName: "Report",
+  //         startDate: formattedStartDate,
+  //         endDate: formattedEndDate
+  //       })
+  //     });
+
+  //     const result = await response.json();
+  //     console.log("Date submission result:", result);
+
+  //     if (result.status === "success" || result.success) {
+  //       toast.success("Dates submitted successfully!");
+
+  //       // Optional: Wait for 2 seconds before processing
+  //       await new Promise(resolve => setTimeout(resolve, 2000));
+
+  //       // Call processAllData function after successful date submission
+  //       await callProcessAllData();
+  //     } else {
+  //       throw new Error(result.message || "Date submission failed");
+  //     }
+  //   } catch (error) {
+  //     console.error("Date submission error:", error);
+  //     toast.error(`Failed to submit dates: ${error.message}`);
+  //   } finally {
+  //     setIsSubmittingDates(false);
+  //   }
+  // };
+
+
+  const submitDates = async () => {
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+
+    try {
+      setIsSubmittingDates(true);
+
+      // Format dates to YYYY-MM-DD
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
+
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
+
+      console.log("Submitting dates:", { formattedStartDate, formattedEndDate });
+
+      // Submit dates to "Report" sheet - यह अब automatically data भी process करेगा
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          action: 'submitDates',
+          spreadsheetId: SPREADSHEET_ID,
+          sheetName: "Report",
+          startDate: formattedStartDate,
+          endDate: formattedEndDate
+        })
+      });
+
+      const result = await response.json();
+      console.log("Date submission result:", result);
+
+      if (result.status === "success" || result.status === "partial_success") {
+        toast.success("Dates submitted and data processing completed!");
+
+        setStartDate("");
+        setEndDate("");
+
+
+        // थोड़ा wait करें ताकि data process हो जाए
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // ✅ Refresh dashboard data after processing
+        await fetchDashboardData();
+      } else {
+        throw new Error(result.message || "Date submission failed");
+      }
+    } catch (error) {
+      console.error("Date submission error:", error);
+      toast.error(`Failed to submit dates: ${error.message}`);
+    } finally {
+      setIsSubmittingDates(false);
+    }
+  };
+
+
+
+
+
   // Loading state
   if (isLoading) {
     return (
@@ -333,23 +511,92 @@ const AdminDashboard = () => {
       </div>
 
       {/* Employees table */}
+
       <div>
-        {filteredDashboard.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                List of People ({filteredDashboard.length})
-              </h2>
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              List of People {filteredDashboard.length > 0 ? `(${filteredDashboard.length})` : ''}
+            </h2>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 mb-4">    
+                  <div >
+            <input
+              type="text"
+              placeholder="Search by name, department, task..."
+              className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-500">Start Date</span>
+
+                <input
+                  type="date"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">End Date</span>
+                <input
+                  type="date"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              <button
+                onClick={submitDates}
+                disabled={isSubmittingDates || !startDate || !endDate}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${isSubmittingDates || !startDate || !endDate
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
+              >
+                {isSubmittingDates ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4 mr-2 inline"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  "Submit Dates"
+                )}
+              </button>
             </div>
-            <div className="mb-4">
-  <input
-    type="text"
-    placeholder="Search by name, department, task..."
-    className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
+          </div>
+
+
+
+          {filteredDashboard.length > 0 ? (
             <div className="relative h-[calc(100vh-300px)] overflow-hidden">
               <div className="absolute inset-0 overflow-y-auto">
                 <EmployeesTable
@@ -366,16 +613,31 @@ const AdminDashboard = () => {
                 />
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-            <p className="text-gray-500 text-center">No employees found matching your search.</p>
-          </div>
-        )}
+          ) : (
+            <div className="h-40 flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
+              <div className="text-center">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="mt-2 text-gray-500">
+                  {searchTerm ? `No employees found for "${searchTerm}"` : "No employees available"}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Charts section */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Top Scorers */}
         <div className="bg-white rounded-lg border p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Top 5 Scorers</h2>

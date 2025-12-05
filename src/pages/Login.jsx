@@ -224,7 +224,7 @@ const LoginPage = () => {
           </button>
 
           <h2 class="text-2xl font-bold text-gray-900">
-            Inventory Management System
+            Management Information System (MIS)
           </h2>
         </div>
 

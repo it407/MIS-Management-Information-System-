@@ -215,6 +215,17 @@ const AdminLayout = () => {
                 <span className="font-medium ml-3">Dashboard</span>
               </Link>
               <Link
+                to="/admin/department"
+                className={`flex items-center px-4 py-3 rounded-md transition-colors ${isActive('/admin/department')
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                onClick={closeSidebar}
+              >
+                <LayoutDashboard size={20} className="shrink-0" />
+                <span className="font-medium ml-3">Department</span>
+              </Link>
+              <Link
                 to="/admin/history-commitment"
                 className={`flex items-center px-4 py-3 rounded-md transition-colors ${isActive('/admin/history-commitment')
                     ? 'bg-blue-50 text-blue-600'

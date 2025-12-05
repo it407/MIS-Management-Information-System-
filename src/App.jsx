@@ -14,6 +14,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UserKpiKra from './pages/user/UserKpiKra';
 import HistoryCommitment from "./pages/admin/HistoryCommitment";
 import UserKpiKraTable from "./pages/user/UserKpiKraTable";
+import Report from './pages/admin/Report';
+
 
 function App() {
   const { user, loading } = useAuth();
@@ -41,6 +43,7 @@ function App() {
         <Route path="pending-tasks" element={<AdminPendingTasks />} />
         <Route path="commitment" element={<Commitment />} />
         <Route path="kpi-kra" element={<KpiKra />} />
+        <Route path="department" element={<Report />} />
         <Route path="history-commitment" element={<HistoryCommitment />} />
       </Route>
 

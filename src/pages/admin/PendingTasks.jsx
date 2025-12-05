@@ -162,6 +162,9 @@ const AdminPendingTasks = () => {
   const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
   const PENDING_TASK_COLUMN = "col9";
 
+
+   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
+
   const fetchDataSheet = async () => {
     try {
       const response = await fetch(
@@ -320,6 +323,39 @@ const AdminPendingTasks = () => {
     return Array.from(fmsNames).sort();
   };
 
+
+  const getFilteredPersonNames = () => {
+    const personMap = new Map();
+
+    pendingTasks.forEach((item) => {
+        const personName = item._personName || String(item.col4 || "").trim();
+        
+        if (personName && personName !== "") {
+            if (!personMap.has(personName)) {
+                personMap.set(personName, {
+                    value: personName,
+                    displayName: personName,
+                    imageUrl: item._imageUrl || "",
+                });
+            }
+        }
+    });
+
+    const persons = Array.from(personMap.values()).sort((a, b) =>
+        a.displayName.localeCompare(b.displayName)
+    );
+
+    // ✅ Search filter apply करें
+    if (employeeSearchTerm.trim() === "") {
+        return persons;
+    }
+    
+    const searchTerm = employeeSearchTerm.toLowerCase();
+    return persons.filter(person =>
+        person.displayName.toLowerCase().includes(searchTerm)
+    );
+};
+
   const filteredTasks = pendingTasks.filter((item) => {
   const term = searchTerm.toLowerCase();
   const matchesSearch = DISPLAY_COLUMNS.some((colId) => {
@@ -347,6 +383,7 @@ const handlePersonSelect = (person) => {
   setFilterType("col4"); // ✅ CHANGE: Type 'col4' set karna
   setFilterValue(person.value);
   setShowPersonDropdown(false);
+  setEmployeeSearchTerm(""); 
 };
 
 // ✅ Selected person find karna
@@ -376,71 +413,100 @@ const selectedPerson = getPersonNamesWithImages().find(
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
-          <div className="relative">
-            <div
-              className="border px-3 py-2 rounded w-full focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer flex justify-between items-center"
-              onClick={() => setShowPersonDropdown(!showPersonDropdown)}
-            >
-              {selectedPerson ? (
-                <div className="flex items-center">
-                  <Avatar
+    <div className="relative">
+    <div
+        className="border px-3 py-2 rounded w-full focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer flex justify-between items-center"
+        onClick={() => {
+            setShowPersonDropdown(!showPersonDropdown);
+            if (!showPersonDropdown) {
+                setEmployeeSearchTerm(""); // Open होने पर search clear करें
+            }
+        }}
+    >
+        {selectedPerson ? (
+            <div className="flex items-center">
+                <Avatar
                     imageUrl={selectedPerson.imageUrl}
                     userName={selectedPerson.displayName}
                     size="w-12 h-12"
-                  />
-
-                  <span className="ml-2">{selectedPerson.displayName}</span>
-                </div>
-              ) : (
-                <span>All Persons</span>
-              )}
-              <svg
-                className={`w-4 h-4 ml-2 transition-transform ${showPersonDropdown ? "rotate-180" : ""
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
                 />
-              </svg>
+                <span className="ml-2">{selectedPerson.displayName}</span>
             </div>
+        ) : (
+            <span>All Persons</span>
+        )}
+        <svg
+            className={`w-4 h-4 ml-2 transition-transform ${showPersonDropdown ? "rotate-180" : ""
+                }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+            />
+        </svg>
+    </div>
 
-            {showPersonDropdown && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                <div
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() =>
-                    handlePersonSelect({
-                      value: "",
-                      displayName: "All Persons",
-                    })
-                  }
-                >
-                  All Persons
+    {showPersonDropdown && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            {/* ✅ Search Input in Dropdown */}
+            <div className="sticky top-0 bg-white p-2 border-b z-20">
+                <input
+                    type="text"
+                    placeholder="Search persons..."
+                    className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    onClick={(e) => e.stopPropagation()}
+                    value={employeeSearchTerm}
+                    onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                    autoFocus
+                />
+            </div>
+            
+            <div
+                className="p-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                    setFilterType("col4");
+                    setFilterValue("");
+                    setShowPersonDropdown(false);
+                    setEmployeeSearchTerm("");
+                }}
+            >
+                All Persons
+            </div>
+            
+            {getFilteredPersonNames().length > 0 ? (
+                getFilteredPersonNames().map((person) => (
+                    <div
+                        key={person.value}
+                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        onClick={() => {
+                            setFilterType("col4");
+                            setFilterValue(person.value);
+                            setShowPersonDropdown(false);
+                            setEmployeeSearchTerm("");
+                        }}
+                    >
+                        <Avatar
+                            imageUrl={person.imageUrl}
+                            userName={person.displayName}
+                            size="w-9 h-9"
+                        />
+                        <span className="ml-2 truncate">{person.displayName}</span>
+                    </div>
+                ))
+            ) : (
+                <div className="p-4 text-center text-gray-500">
+                    No persons found for "{employeeSearchTerm}"
                 </div>
-                {getPersonNamesWithImages().map((person) => (
-                  <div
-                    key={person.value}
-                    className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                    onClick={() => handlePersonSelect(person)}
-                  >
-                    <Avatar
-                      imageUrl={person.imageUrl}
-                      userName={person.displayName}
-                      size="w-9 h-9"
-                    />
-                    <span className="ml-2">{person.displayName}</span>
-                  </div>
-                ))}
-              </div>
             )}
-          </div>
+        </div>
+    )}
+</div>
 
           <div>
             <select

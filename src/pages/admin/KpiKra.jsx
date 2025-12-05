@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import KpikraTable from "../../components/tables/KpikraTable";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -12,12 +12,82 @@ const KpiKra = () => {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [availableDesignations, setAvailableDesignations] = useState([]);
 
+  const [searchText, setSearchText] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
+
+
+  const filteredDesignations = availableDesignations.filter((d) =>
+    d.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   // Initialize available designations based on user role
   useEffect(() => {
     if (user) {
       if (user.role === "admin") {
         // Admin can see all designations
-        setAvailableDesignations(["CRM", "PURCHASER", "HR", "EA", "ACCOUNTANT"]);
+        setAvailableDesignations([
+          "Manager",
+          "Office Boy",
+          "EA to Director",
+          "Gardner",
+          "Executive",
+          "Assistant Manager",
+          "Sr. Executive",
+          "Sr. Manager",
+          "Deputy Manager",
+          "General Manager",
+          "CRE & Reception",
+          "AGM",
+          "Purchase Executive",
+          "Key Account Manager",
+          "Driver",
+          "Loader",
+          "Supervisor",
+          "Fitter",
+          "Electrician",
+          "Assistant Fitter",
+          "Machine Operator",
+          "Plant Head",
+          "Data Entry Operator",
+          "Floor Supervisor",
+          "Distributor Relationship Manager",
+          "Retailer Relationship Executive",
+          "Customer Care Executive",
+          "Marketing Lead",
+          "ASM",
+          "BDM",
+          "AGM - International Business",
+          "ASE",
+          "BDO",
+          "Sales Representative",
+          "Sales Coordinator",
+          "Business Development Executive",
+          "Sales Officer",
+          "Sr. Area Sales Executive",
+          "Area Sales Manager",
+          "Area Sales Executive",
+          "SO",
+          "Vice President",
+          "Chief of Staff",
+          "Team Lead - Customer Success",
+          "Management",
+
+          // Add your existing options also:
+          "CRM",
+          "PURCHASER",
+          "HR",
+          "EA",
+          "ACCOUNTANT",
+          "Assistent Manager",
+          "SALES EXECUTIVE",
+          "MARKETING",
+          "DEVELOPER",
+          "DESIGNER",
+          "MANAGER"
+        ]);
+
         // Don't auto-select anything for admin - let them choose
       } else if (user.designations && user.designations.length > 0) {
         // Regular users can only see their assigned designations
@@ -127,6 +197,20 @@ const KpiKra = () => {
     }
   };
 
+
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
   const handleDropdownChange = async (newDesignation) => {
     if (newDesignation === selectedDesignation) return;
 
@@ -146,10 +230,10 @@ const KpiKra = () => {
             submitMessage && (
               <p
                 className={`mt-2 text-sm ${submitMessage.includes("✅")
-                    ? "text-black"       // success message black
-                    : submitMessage.includes("⚠️")
-                      ? "text-yellow-600"  // warning message
-                      : "text-gray-600"    // loading or default
+                  ? "text-black"       // success message black
+                  : submitMessage.includes("⚠️")
+                    ? "text-yellow-600"  // warning message
+                    : "text-gray-600"    // loading or default
                   }`}
               >
                 {submitMessage}
@@ -200,42 +284,54 @@ const KpiKra = () => {
 
         {availableDesignations.length > 0 && (
           <div className="relative">
-            <select
-              value={selectedDesignation}
-              onChange={(e) => handleDropdownChange(e.target.value)}
-              disabled={isSubmitting}
-              className="appearance-none px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-white/50 focus:border-transparent disabled:opacity-50 pr-12 text-lg font-semibold min-w-[150px] cursor-pointer"
-              style={{
-                colorScheme: 'dark',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none'
-              }}
-            >
-              <option value="" disabled style={{
-                backgroundColor: '#ffffff',
-                color: '#6b7280',
-                padding: '12px 16px',
-                fontSize: '16px',
-                fontWeight: '500'
-              }}>
-                Select Designation
-              </option>
-              {availableDesignations.map((designation) => (
-                <option
-                  key={designation}
-                  value={designation}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    color: '#1f2937',
-                    padding: '12px 16px',
-                    fontSize: '16px',
-                    fontWeight: '500'
-                  }}
+            <div ref={dropdownRef} className="relative min-w-[200px]">
+              {/* Search Box */}
+              <input
+                type="text"
+                placeholder="Search Designation..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onFocus={() => setOpen(true)}
+                className="px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-white/50 pr-10 text-lg font-semibold w-full"
+              />
+
+              {/* Dropdown */}
+              {open && (
+                <div className="absolute mt-2 w-full bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto z-30">
+                  {filteredDesignations.length > 0 ? (
+                    filteredDesignations.map((designation) => (
+                      <div
+                        key={designation}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-gray-800"
+                        onClick={() => {
+                          setSearchText("");     // clear search
+                          setOpen(false);        // close dropdown
+                          handleDropdownChange(designation);
+                        }}
+                      >
+                        {designation}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-500">No results found</div>
+                  )}
+                </div>
+              )}
+
+              {/* Arrow Icon */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {designation}
-                </option>
-              ))}
-            </select>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+
             {availableDesignations.length > 1 && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg

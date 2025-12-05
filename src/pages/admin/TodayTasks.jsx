@@ -9,16 +9,16 @@ const convertGoogleDriveImageUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
 
   const cleanUrl = url.trim().replace(/^"|"$/g, '');
-  
+
   // If it's already a CORS-safe URL, return it
-  if (cleanUrl.includes('drive.google.com/uc?export=view') || 
-      cleanUrl.includes('lh3.googleusercontent.com')) {
+  if (cleanUrl.includes('drive.google.com/uc?export=view') ||
+    cleanUrl.includes('lh3.googleusercontent.com')) {
     return cleanUrl;
   }
 
   // Extract file ID from various Google Drive URL formats
   let fileId = null;
-  
+
   const patterns = [
     /\/file\/d\/([a-zA-Z0-9-_]+)/,
     /[?&]id=([a-zA-Z0-9-_]+)/,
@@ -53,7 +53,7 @@ const processSpreadsheetImageData = (rawImageData) => {
   }
 
   const cleanedData = rawImageData.replace(/^"|"$/g, '').trim();
-  
+
   if (!cleanedData || cleanedData.toLowerCase() === 'link') {
     return { imageUrl: null, userName: '' };
   }
@@ -87,14 +87,14 @@ const processSpreadsheetImageData = (rawImageData) => {
 };
 
 // Safe Image Component with fallbacks
-const SafeImage = ({ 
-  src, 
-  alt = 'Image', 
-  className = '', 
-  onError, 
+const SafeImage = ({
+  src,
+  alt = 'Image',
+  className = '',
+  onError,
   name = 'User',
   showInitials = true,
-  ...props 
+  ...props
 }) => {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
@@ -168,6 +168,8 @@ const AdminTodayTasks = () => {
   const [error, setError] = useState(null);
   const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
+
   const DISPLAY_COLUMNS = ["col2", "col3", "col4", "col14"];
   const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
   // Column P (16th column, 0-indexed = col15) represents "Today Task"
@@ -197,7 +199,7 @@ const AdminTodayTasks = () => {
         }
 
         const rawValue = String(itemObj.col23 || "").replace(/^"|"$/g, "");
-        
+
         // Use CORS-safe image processing
         const { imageUrl, userName, combinedValue } = processSpreadsheetImageData(rawValue);
 
@@ -240,31 +242,67 @@ const AdminTodayTasks = () => {
     fetchTodayData();
   }, []);
 
- const getPersonNamesWithImages = () => {
-  const personMap = new Map();
 
-  todayTasks.forEach((item) => {
-    // सिर्फ col4 से नाम लें
-    const name = String(item.col4 || "").trim();
-    const imageUrl = item._imageUrl || "";
-    
-    if (name && name !== "" && name !== "undefined" && name !== "null") {
-      const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
-      
-      if (!personMap.has(name)) {
-        personMap.set(name, {
-          value: combinedValue,
-          displayName: name,
-          imageUrl: imageUrl,
-        });
+  const getFilteredPersonNames = () => {
+    const personMap = new Map();
+
+    todayTasks.forEach((item) => {
+      const name = String(item.col4 || "").trim();
+      const imageUrl = item._imageUrl || "";
+
+      if (name && name !== "" && name !== "undefined" && name !== "null") {
+        const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+
+        if (!personMap.has(name)) {
+          personMap.set(name, {
+            value: combinedValue,
+            displayName: name,
+            imageUrl: imageUrl,
+          });
+        }
       }
-    }
-  });
+    });
 
-  return Array.from(personMap.values()).sort((a, b) =>
-    a.displayName.localeCompare(b.displayName)
-  );
-};
+    const persons = Array.from(personMap.values()).sort((a, b) =>
+      a.displayName.localeCompare(b.displayName)
+    );
+
+    // ✅ Search filter apply करें
+    if (employeeSearchTerm.trim() === "") {
+      return persons;
+    }
+
+    const searchTerm = employeeSearchTerm.toLowerCase();
+    return persons.filter(person =>
+      person.displayName.toLowerCase().includes(searchTerm)
+    );
+  };
+
+  const getPersonNamesWithImages = () => {
+    const personMap = new Map();
+
+    todayTasks.forEach((item) => {
+      // सिर्फ col4 से नाम लें
+      const name = String(item.col4 || "").trim();
+      const imageUrl = item._imageUrl || "";
+
+      if (name && name !== "" && name !== "undefined" && name !== "null") {
+        const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+
+        if (!personMap.has(name)) {
+          personMap.set(name, {
+            value: combinedValue,
+            displayName: name,
+            imageUrl: imageUrl,
+          });
+        }
+      }
+    });
+
+    return Array.from(personMap.values()).sort((a, b) =>
+      a.displayName.localeCompare(b.displayName)
+    );
+  };
 
   const getFMSNames = () => {
     const fmsNames = new Set();
@@ -277,32 +315,32 @@ const AdminTodayTasks = () => {
     return Array.from(fmsNames).sort();
   };
 
- const filteredTasks = todayTasks.filter((item) => {
-  const term = searchTerm.toLowerCase();
-  
-  // Search in all columns
-  const matchesSearch = Object.keys(item).some((key) =>
-    String(item[key] || "")
-      .toLowerCase()
-      .includes(term)
-  );
+  const filteredTasks = todayTasks.filter((item) => {
+    const term = searchTerm.toLowerCase();
 
-  let matchesFilter = true;
-  if (filterValue) {
-    if (filterType === "col23") {
-      // अब col4 से फिल्टर करें
-      const itemName = String(item.col4 || "").trim();
-      const filterName = getPersonNamesWithImages().find(
-        (p) => p.value === filterValue
-      )?.displayName || "";
-      matchesFilter = itemName === filterName;
-    } else if (filterType === "col2") {
-      matchesFilter = item.col2 === filterValue;
+    // Search in all columns
+    const matchesSearch = Object.keys(item).some((key) =>
+      String(item[key] || "")
+        .toLowerCase()
+        .includes(term)
+    );
+
+    let matchesFilter = true;
+    if (filterValue) {
+      if (filterType === "col23") {
+        // अब col4 से फिल्टर करें
+        const itemName = String(item.col4 || "").trim();
+        const filterName = getPersonNamesWithImages().find(
+          (p) => p.value === filterValue
+        )?.displayName || "";
+        matchesFilter = itemName === filterName;
+      } else if (filterType === "col2") {
+        matchesFilter = item.col2 === filterValue;
+      }
     }
-  }
 
-  return matchesSearch && matchesFilter;
-});
+    return matchesSearch && matchesFilter;
+  });
   const handlePersonSelect = (person) => {
     setFilterType("col23");
     setFilterValue(person.value);
@@ -327,14 +365,14 @@ const AdminTodayTasks = () => {
   };
 
   return (
-    <div className="space-y-4" style={{ height: "calc(110vh - 90px)",marginTop:"-40px" }}>
-      
+    <div className="space-y-4" style={{ height: "calc(110vh - 90px)", marginTop: "-40px" }}>
+
       {/* Header */}
       <div className="flex justify-between items-center pt-2">
         <h1 className="text-2xl font-bold text-gray-800">Today Tasks</h1>
         <div className="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
           {filteredTasks.length} Today Task
-          {filteredTasks.length !== 1 ? "s" : ""} 
+          {filteredTasks.length !== 1 ? "s" : ""}
         </div>
       </div>
 
@@ -351,16 +389,22 @@ const AdminTodayTasks = () => {
           />
 
           {/* Custom Person Dropdown */}
+          {/* Custom Person Dropdown */}
           <div className="relative">
             <div
               className="border px-3 py-2 rounded w-full focus:ring-green-500 focus:border-green-500 bg-white cursor-pointer flex justify-between items-center"
-              onClick={() => setShowPersonDropdown(!showPersonDropdown)}
+              onClick={() => {
+                setShowPersonDropdown(!showPersonDropdown);
+                if (!showPersonDropdown) {
+                  setEmployeeSearchTerm(""); // Open होने पर search clear करें
+                }
+              }}
             >
               {selectedPerson ? (
                 <div className="flex items-center">
-                  <PersonImage 
-                    person={selectedPerson} 
-                    className="w-6 h-6 rounded-full mr-2 object-cover" 
+                  <PersonImage
+                    person={selectedPerson}
+                    className="w-6 h-6 rounded-full mr-2 object-cover"
                   />
                   <span>{selectedPerson.displayName}</span>
                 </div>
@@ -368,9 +412,8 @@ const AdminTodayTasks = () => {
                 <span>All Persons</span>
               )}
               <svg
-                className={`w-4 h-4 ml-2 transition-transform ${
-                  showPersonDropdown ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 ml-2 transition-transform ${showPersonDropdown ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -386,31 +429,55 @@ const AdminTodayTasks = () => {
             </div>
 
             {showPersonDropdown && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                {/* ✅ Search Input in Dropdown */}
+                <div className="sticky top-0 bg-white p-2 border-b z-20">
+                  <input
+                    type="text"
+                    placeholder="Search persons..."
+                    className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    onClick={(e) => e.stopPropagation()}
+                    value={employeeSearchTerm}
+                    onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
                 <div
                   className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() =>
+                  onClick={() => {
                     handlePersonSelect({
                       value: "",
                       displayName: "All Persons",
-                    })
-                  }
+                    });
+                    setEmployeeSearchTerm("");
+                  }}
                 >
                   All Persons
                 </div>
-                {getPersonNamesWithImages().map((person) => (
-                  <div
-                    key={person.value}
-                    className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                    onClick={() => handlePersonSelect(person)}
-                  >
-                    <PersonImage 
-                      person={person} 
-                      className="w-6 h-6 rounded-full mr-2 object-cover" 
-                    />
-                    <span>{person.displayName}</span>
+
+                {getFilteredPersonNames().length > 0 ? (
+                  getFilteredPersonNames().map((person) => (
+                    <div
+                      key={person.value}
+                      className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      onClick={() => {
+                        handlePersonSelect(person);
+                        setEmployeeSearchTerm("");
+                      }}
+                    >
+                      <PersonImage
+                        person={person}
+                        className="w-6 h-6 rounded-full mr-2 object-cover"
+                      />
+                      <span className="truncate">{person.displayName}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    No persons found for "{employeeSearchTerm}"
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -456,12 +523,11 @@ const AdminTodayTasks = () => {
           <div className="mb-3">
             <h2 className="text-lg font-semibold text-gray-800">
               {filterValue
-                ? `Showing ${filterType === "col2" ? "FMS Name" : "Person"}: ${
-                    selectedPerson?.displayName || filterValue
-                  }`
+                ? `Showing ${filterType === "col2" ? "FMS Name" : "Person"}: ${selectedPerson?.displayName || filterValue
+                }`
                 : "All Tasks"}
             </h2>
-       
+
           </div>
           <div className="h-[calc(100vh-270px)] overflow-hidden">
             <TodayTasksTable
