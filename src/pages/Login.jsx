@@ -96,18 +96,21 @@ const LoginPage = () => {
       // Search for matching user credentials
       for (const row of data.table.rows) {
         const sheetUsername = extractValue(row, 0); // Column A: Name
+        const sheetDepartment = extractValue(row, 2); // Column C: Department
         const sheetDesignation = extractValue(row, 5); // Column F: Designation
         const sheetPassword = extractValue(row, 3); // Column D: Password
         const sheetRole = extractValue(row, 4).toLowerCase(); // Column E: Role
         const sheetDesignations = extractValue(row, 5); // Column F: Designations
         console.log(sheetDesignations)
         localStorage.setItem("kpi_selected_designation", sheetDesignations);
+        localStorage.setItem("kpi_selected_department", sheetDepartment);
 
         if (sheetUsername.toLowerCase() === username.toLowerCase() && sheetPassword === password) {
           matchedUser = {
             username: sheetUsername,
             name: sheetUsername,
             designation: sheetDesignation, // Changed from department to designation
+            department: sheetDepartment,
             role: sheetRole || "user",
             designations: sheetDesignations ? sheetDesignations.split(',').map(d => d.trim()) : [],
           };

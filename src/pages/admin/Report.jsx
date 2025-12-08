@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Filter, Search, Calendar, ChevronDown } from "lucide-react";
 import { employees, tasks, departments } from "../../data/mockData";
 
+
+import FilteredDataCharts  from "../../components/charts/DataCharts"; // ya jahan bhi component save kiya ho
+
 const Report = () => {
     const [filterName, setFilterName] = useState("");
     const [filterDepartment, setFilterDepartment] = useState("");
@@ -21,10 +24,28 @@ const Report = () => {
     const [deptSearchQuery, setDeptSearchQuery] = useState("");
 
 
+    // Existing states के साथ ये add करें:
+    const [filterFMSName, setFilterFMSName] = useState("");
+    const [isFMSDropdownOpen, setIsFMSDropdownOpen] = useState(false);
+    const [fmsSearchQuery, setFmsSearchQuery] = useState("");
+    const [uniqueFMSNames, setUniqueFMSNames] = useState([]);
+
+
+
+
     // API Configuration
     const SHEET_NAME = "Data";
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxsivpBFRp-nkwL2tlmVRUNyW3U554AzguV3OQrYIjDBCh_G5cOG47_NWMHWOamOQY4/exec";
 
+
+
+    const currentFilters = React.useMemo(() => ({
+        filterFMSName,
+        filterName,
+        filterDepartment,
+        startDate,
+        endDate
+    }), [filterFMSName, filterName, filterDepartment, startDate, endDate]);
 
 
 
@@ -78,6 +99,11 @@ const Report = () => {
 
                 const depts = [...new Set(mappedTasks.map(t => t.department).filter(d => d))];
                 setUniqueDepartments(depts);
+
+                const fmsNames = [...new Set(mappedTasks.map(t => t.fmsName).filter(f => f))];
+                setUniqueFMSNames(fmsNames);
+
+
             } else {
                 throw new Error(data.message || "Failed to fetch data");
             }
@@ -102,58 +128,118 @@ const Report = () => {
         applyFilters();
     }, []);
 
+    // const applyFilters = () => {
+    //     let filtered = [...filteredData];
+
+    //     // Filter by Name - personName se match karo
+    //     if (filterName) {
+    //         filtered = filtered.filter((task) =>
+    //             task.personName.toLowerCase().includes(filterName.toLowerCase())
+    //         );
+    //     }
+
+    //     if (filterFMSName) {
+    //         filtered = filtered.filter((task) =>
+    //             task.fmsName.toLowerCase().includes(filterFMSName.toLowerCase())
+    //         );
+    //     }
+
+    //     // Filter by Department - department se match karo (fmsName nahi)
+    //     if (filterDepartment) {
+    //         filtered = filtered.filter((task) =>
+    //             task.department === filterDepartment
+    //         );
+    //     }
+
+    //     if (startDate) {
+    //         filtered = filtered.filter((task) => {
+    //             if (!task.startDate) return false;
+
+    //             // यदि date string format में है
+    //             const taskStartDate = new Date(task.startDate);
+    //             const selectedStartDate = new Date(startDate);
+
+    //             // Same day या उसके बाद की dates filter करो
+    //             taskStartDate.setHours(0, 0, 0, 0);
+    //             selectedStartDate.setHours(0, 0, 0, 0);
+
+    //             return taskStartDate >= selectedStartDate;
+    //         });
+    //     }
+
+    //     // Filter by End Date - कॉलम W से match करो
+    //     if (endDate) {
+    //         filtered = filtered.filter((task) => {
+    //             if (!task.endDate) return false;
+
+    //             // यदि date string format में है
+    //             const taskEndDate = new Date(task.endDate);
+    //             const selectedEndDate = new Date(endDate);
+
+    //             // Same day या उसके पहले की dates filter करो
+    //             taskEndDate.setHours(0, 0, 0, 0);
+    //             selectedEndDate.setHours(0, 0, 0, 0);
+
+    //             return taskEndDate <= selectedEndDate;
+    //         });
+    //     }
+
+    //     return filtered;
+    // };
+
+
     const applyFilters = () => {
-        let filtered = [...filteredData];
+    let filtered = [...filteredData];
 
-        // Filter by Name - personName se match karo
-        if (filterName) {
-            filtered = filtered.filter((task) =>
-                task.personName.toLowerCase().includes(filterName.toLowerCase())
-            );
-        }
+    // Filter by Name - EXACT match karo
+    if (filterName) {
+        filtered = filtered.filter((task) =>
+            task.personName && 
+            task.personName.toLowerCase() === filterName.toLowerCase()
+        );
+    }
 
-        // Filter by Department - department se match karo (fmsName nahi)
-        if (filterDepartment) {
-            filtered = filtered.filter((task) =>
-                task.department === filterDepartment
-            );
-        }
+    // Filter by FMS Name - EXACT match karo
+    if (filterFMSName) {
+        filtered = filtered.filter((task) =>
+            task.fmsName && 
+            task.fmsName.toLowerCase() === filterFMSName.toLowerCase()
+        );
+    }
 
-        if (startDate) {
-            filtered = filtered.filter((task) => {
-                if (!task.startDate) return false;
+    // Filter by Department - EXACT match karo
+    if (filterDepartment) {
+        filtered = filtered.filter((task) =>
+            task.department && 
+            task.department.toLowerCase() === filterDepartment.toLowerCase()
+        );
+    }
 
-                // यदि date string format में है
-                const taskStartDate = new Date(task.startDate);
-                const selectedStartDate = new Date(startDate);
+    // Date filters...
+    if (startDate) {
+        filtered = filtered.filter((task) => {
+            if (!task.startDate) return false;
+            const taskStartDate = new Date(task.startDate);
+            const selectedStartDate = new Date(startDate);
+            taskStartDate.setHours(0, 0, 0, 0);
+            selectedStartDate.setHours(0, 0, 0, 0);
+            return taskStartDate >= selectedStartDate;
+        });
+    }
 
-                // Same day या उसके बाद की dates filter करो
-                taskStartDate.setHours(0, 0, 0, 0);
-                selectedStartDate.setHours(0, 0, 0, 0);
+    if (endDate) {
+        filtered = filtered.filter((task) => {
+            if (!task.endDate) return false;
+            const taskEndDate = new Date(task.endDate);
+            const selectedEndDate = new Date(endDate);
+            taskEndDate.setHours(0, 0, 0, 0);
+            selectedEndDate.setHours(0, 0, 0, 0);
+            return taskEndDate <= selectedEndDate;
+        });
+    }
 
-                return taskStartDate >= selectedStartDate;
-            });
-        }
-
-        // Filter by End Date - कॉलम W से match करो
-        if (endDate) {
-            filtered = filtered.filter((task) => {
-                if (!task.endDate) return false;
-
-                // यदि date string format में है
-                const taskEndDate = new Date(task.endDate);
-                const selectedEndDate = new Date(endDate);
-
-                // Same day या उसके पहले की dates filter करो
-                taskEndDate.setHours(0, 0, 0, 0);
-                selectedEndDate.setHours(0, 0, 0, 0);
-
-                return taskEndDate <= selectedEndDate;
-            });
-        }
-
-        return filtered;
-    };
+    return filtered;
+};
 
     const clearFilters = () => {
         setFilterName("");
@@ -164,7 +250,7 @@ const Report = () => {
         setDeptSearchQuery("");
         setIsNameDropdownOpen(false);
         setIsDeptDropdownOpen(false);
-        // Data refresh nahi karna, applyFilters automatically handle karega
+        setIsFMSDropdownOpen(false);
     };
 
     const handleNameSelect = (name) => {
@@ -228,7 +314,7 @@ const Report = () => {
 
     useEffect(() => {
         applyFilters();
-    }, [filterName, filterDepartment, startDate, endDate]);
+    }, [filterName, filterDepartment, filterFMSName, startDate, endDate]);
 
 
     if (loading) {
@@ -266,7 +352,7 @@ const Report = () => {
             <div className="flex flex-col gap-3 justify-between items-start sm:flex-row sm:items-center ">
                 <div className="flex-1 min-w-0">
                     <h1 className="text-xl font-bold text-gray-900 md:text-2xl">
-                        Department Report
+                        Department Deeply Report
                     </h1>
                 </div>
                 <div className="flex flex-shrink-0 gap-2 items-center  text-sm text-gray-500 bg-gray-50 rounded-md">
@@ -290,7 +376,7 @@ const Report = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 md:gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5 md:gap-2">
                     {/* Filter by Name */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -432,6 +518,82 @@ const Report = () => {
                         </div>
                     </div>
 
+
+                    {/* Filter by FMS Name - Filter by Department के बाद add करें */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 whitespace-nowrap">
+                            Filter by FMS Name
+                        </label>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsFMSDropdownOpen(!isFMSDropdownOpen);
+                                    setIsNameDropdownOpen(false);
+                                    setIsDeptDropdownOpen(false);
+                                }}
+                                className="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 truncate"
+                            >
+                                <span className={filterFMSName ? "text-gray-900 truncate" : "text-gray-500 truncate"}>
+                                    {filterFMSName || "Select FMS..."}
+                                </span>
+                                <ChevronDown
+                                    className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isFMSDropdownOpen ? "rotate-180" : ""}`}
+                                />
+                            </button>
+
+                            {isFMSDropdownOpen && (
+                                <div className="absolute z-50 mt-1 w-full max-h-60 bg-white rounded-md border border-gray-300 shadow-lg overflow-hidden">
+                                    {/* Search Input */}
+                                    <div className="p-2 border-b border-gray-200">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-1/2 w-4 h-4 text-gray-400 -translate-y-1/2" />
+                                            <input
+                                                type="text"
+                                                value={fmsSearchQuery}
+                                                onChange={(e) => setFmsSearchQuery(e.target.value)}
+                                                placeholder="Search FMS..."
+                                                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-auto max-h-48">
+                                        <div className="py-1">
+                                            <button
+                                                onClick={() => {
+                                                    setFilterFMSName("");
+                                                    setIsFMSDropdownOpen(false);
+                                                    setFmsSearchQuery("");
+                                                }}
+                                                className="px-3 py-2.5 w-full text-sm text-left text-gray-700 border-b border-gray-100 hover:bg-gray-100 whitespace-nowrap"
+                                            >
+                                                All FMS
+                                            </button>
+                                            {uniqueFMSNames
+                                                .filter(fms => fms.toLowerCase().includes(fmsSearchQuery.toLowerCase()))
+                                                .map((fms) => (
+                                                    <button
+                                                        key={fms}
+                                                        onClick={() => {
+                                                            setFilterFMSName(fms);
+                                                            setIsFMSDropdownOpen(false);
+                                                            setFmsSearchQuery("");
+                                                        }}
+                                                        className="flex gap-2 items-center px-3 py-2.5 w-full text-sm text-left text-gray-900 border-b border-gray-100 hover:bg-gray-100 last:border-b-0 whitespace-nowrap"
+                                                    >
+                                                        {fms}
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+
                     {/* Start Date */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -473,8 +635,9 @@ const Report = () => {
                     <div className="flex justify-between items-center">
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-gray-600 truncate">FMS Name</p>
+
                             <p className="mt-1 text-lg font-semibold text-gray-900 truncate">
-                                {[...new Set(filteredData.map((task) => task.fmsName))].length}
+                                {[...new Set(applyFilters().map((task) => task.fmsName))].filter(fms => fms).length}
                             </p>
                         </div>
                         <div className="flex justify-center items-center w-8 h-8 bg-blue-50 rounded-full ml-2 flex-shrink-0">
@@ -528,7 +691,7 @@ const Report = () => {
                 <div className="w-full p-3 bg-white rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center">
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-600 truncate">Overall Score</p>
+                            <p className="text-xs font-medium text-gray-600 truncate">Overall Done Score</p>
                             <p className="mt-1 text-lg font-semibold text-gray-900 truncate">
                                 {(() => {
                                     const filtered = applyFilters();
@@ -834,6 +997,8 @@ const Report = () => {
                     )}
                 </div>
             </div>
+
+            <FilteredDataCharts filters={currentFilters}  tableData={applyFilters()}/>
         </div>
     );
 };

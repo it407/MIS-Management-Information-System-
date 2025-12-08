@@ -416,7 +416,6 @@ const AdminDashboard = () => {
 
 
 
-
   // Loading state
   if (isLoading) {
     return (
@@ -691,7 +690,7 @@ const AdminDashboard = () => {
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Department Scores</h2>
         <div className="h-[500px] w-full overflow-hidden rounded-lg border border-gray-200">
           <iframe
-            src={`https://docs.google.com/spreadsheets/d/e/2PACX-1vQXxVx1Rh0dhrvuralV6_E8ckP2VWfsJ30vZiZAxNkJovbUYb0LrbXlGd7a5yxOavXwUsQwl0sShdi_/pubchart?oid=1932717403&amp;format=interactive`}
+            src={`https://docs.google.com/spreadsheets/d/e/2PACX-1vQevflaEBcHCIR2_hEsSC154BDiqUBrNYWTkzPrSLqtjPyB7pCpg8WhTeGyQwyJePlfsHjP3SR9jv1X/pubchart?oid=1932717403&format=interactive`}
             width="100%"
             height="100%"
             frameBorder="0"

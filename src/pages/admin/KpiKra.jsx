@@ -76,16 +76,13 @@ const KpiKra = () => {
 
           // Add your existing options also:
           "CRM",
-          "PURCHASER",
+          "Purchase",
           "HR",
           "EA",
-          "ACCOUNTANT",
-          "Assistent Manager",
-          "SALES EXECUTIVE",
-          "MARKETING",
-          "DEVELOPER",
-          "DESIGNER",
-          "MANAGER"
+          "Sales Executive",
+          "Marketing",
+          "Developer",
+          "Designer",
         ]);
 
         // Don't auto-select anything for admin - let them choose

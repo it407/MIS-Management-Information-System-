@@ -80,7 +80,13 @@ const HistoryCommitment = () => {
     const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
 
-    const [employeeSearchTerm, setEmployeeSearchTerm] = useState(""); 
+    // Existing states के साथ ये add करें:
+    const [filterFMSName, setFilterFMSName] = useState("");
+    const [isFMSDropdownOpen, setIsFMSDropdownOpen] = useState(false);
+    const [fmsSearchQuery, setFmsSearchQuery] = useState("");
+
+
+    const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
 
     const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
 
@@ -89,7 +95,8 @@ const HistoryCommitment = () => {
     // Column mapping with optimized widths
     const COLUMN_MAPPING = [
         // { index: 13, label: "Employee", key: "linkWithName", width: "200px" },
-        { index: 2 , label: "Name", key: "name", width: "200px" },
+        { index: 15, label: "FMS Name", key: "fmsName", width: "180px" },
+        { index: 2, label: "Name", key: "name", width: "200px" },
         { index: 3, label: "Target", key: "target", width: "120px" },
         { index: 4, label: "Actual Work Done", key: "actualWorkDone", width: "150px" },
         { index: 5, label: "% Work Not Done", key: "workNotDone", width: "140px" },
@@ -189,30 +196,30 @@ const HistoryCommitment = () => {
 
     // Get unique employee names with images for dropdown
     const getEmployeeNamesWithImages = () => {
-    const employeeMap = new Map();
+        const employeeMap = new Map();
 
-    dashboardTasks.forEach((item) => {
-        // सिर्फ "name" कॉलम से नाम लें (index: 2)
-        const name = String(item.name || "").trim();
-        const imageUrl = item._imageUrl || "";
-        
-        if (name && name !== "" && name !== "undefined" && name !== "null") {
-            const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
-            
-            if (!employeeMap.has(name)) {
-                employeeMap.set(name, {
-                    value: combinedValue,
-                    displayName: name,
-                    imageUrl: imageUrl,
-                });
+        dashboardTasks.forEach((item) => {
+            // सिर्फ "name" कॉलम से नाम लें (index: 2)
+            const name = String(item.name || "").trim();
+            const imageUrl = item._imageUrl || "";
+
+            if (name && name !== "" && name !== "undefined" && name !== "null") {
+                const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+
+                if (!employeeMap.has(name)) {
+                    employeeMap.set(name, {
+                        value: combinedValue,
+                        displayName: name,
+                        imageUrl: imageUrl,
+                    });
+                }
             }
-        }
-    });
+        });
 
-    return Array.from(employeeMap.values()).sort((a, b) =>
-        a.displayName.localeCompare(b.displayName)
-    );
-};
+        return Array.from(employeeMap.values()).sort((a, b) =>
+            a.displayName.localeCompare(b.displayName)
+        );
+    };
 
     // Get unique targets for filter
     const getTargets = () => {
@@ -228,74 +235,108 @@ const HistoryCommitment = () => {
 
 
     const getFilteredEmployeeNames = () => {
-    const employeeMap = new Map();
-    
-    dashboardTasks.forEach((item) => {
-        const name = String(item.name || "").trim();
-        const imageUrl = item._imageUrl || "";
-        
-        if (name && name !== "" && name !== "undefined" && name !== "null") {
-            const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
-            
-            if (!employeeMap.has(name)) {
-                employeeMap.set(name, {
-                    value: combinedValue,
-                    displayName: name,
-                    imageUrl: imageUrl,
-                });
+        const employeeMap = new Map();
+
+        dashboardTasks.forEach((item) => {
+            const name = String(item.name || "").trim();
+            const imageUrl = item._imageUrl || "";
+
+            if (name && name !== "" && name !== "undefined" && name !== "null") {
+                const combinedValue = imageUrl ? `${imageUrl},${name}` : name;
+
+                if (!employeeMap.has(name)) {
+                    employeeMap.set(name, {
+                        value: combinedValue,
+                        displayName: name,
+                        imageUrl: imageUrl,
+                    });
+                }
             }
+        });
+
+        const employees = Array.from(employeeMap.values()).sort((a, b) =>
+            a.displayName.localeCompare(b.displayName)
+        );
+
+        // Employee search filter apply करें
+        if (employeeSearchTerm.trim() === "") {
+            return employees;
         }
-    });
-    
-    const employees = Array.from(employeeMap.values()).sort((a, b) =>
-        a.displayName.localeCompare(b.displayName)
-    );
-    
-    // Employee search filter apply करें
-    if (employeeSearchTerm.trim() === "") {
-        return employees;
-    }
-    
-    const searchTerm = employeeSearchTerm.toLowerCase();
-    return employees.filter(employee =>
-        employee.displayName.toLowerCase().includes(searchTerm)
-    );
-};
+
+        const searchTerm = employeeSearchTerm.toLowerCase();
+        return employees.filter(employee =>
+            employee.displayName.toLowerCase().includes(searchTerm)
+        );
+    };
+
+
+
+    // Get unique FMS names for filter
+    // Get unique FMS names for filter - अब column C से लेंगे
+    const getFMSNames = () => {
+        const fmsNames = new Set();
+        dashboardTasks.forEach((item) => {
+            const fmsName = String(item.fmsName || "").trim(); // fmsName column से लें
+            if (fmsName && fmsName !== "" && fmsName !== "undefined" && fmsName !== "null") {
+                fmsNames.add(fmsName);
+            }
+        });
+        return Array.from(fmsNames).sort();
+    };
+
+    // Get filtered FMS names for dropdown with search
+    const getFilteredFMSNames = () => {
+        const allFMSNames = getFMSNames();
+
+        if (fmsSearchQuery.trim() === "") {
+            return allFMSNames;
+        }
+
+        const searchTerm = fmsSearchQuery.toLowerCase();
+        return allFMSNames.filter(fmsName =>
+            fmsName.toLowerCase().includes(searchTerm)
+        );
+    };
 
     // Filter tasks based on search and filters
     const filteredTasks = dashboardTasks.filter((item) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = Object.values(item).some(value =>
-        String(value || "").toLowerCase().includes(term)
-    );
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = Object.values(item).some(value =>
+            String(value || "").toLowerCase().includes(term)
+        );
 
-    let matchesFilter = true;
-    if (filterValue) {
-        if (filterType === "linkWithName") {
-            // सिर्फ नाम से मिलान करें
-            const itemName = String(item.name || "").trim();
-            const filterName = getEmployeeNamesWithImages().find(
-                emp => emp.value === filterValue
-            )?.displayName || "";
-            matchesFilter = itemName === filterName;
-        } else if (filterType === "target") {
-            matchesFilter = item.target === filterValue;
+        let matchesFilter = true;
+        if (filterValue) {
+            if (filterType === "linkWithName") {
+                // सिर्फ नाम से मिलान करें
+                const itemName = String(item.name || "").trim();
+                const filterName = getEmployeeNamesWithImages().find(
+                    emp => emp.value === filterValue
+                )?.displayName || "";
+                matchesFilter = itemName === filterName;
+            } else if (filterType === "target") {
+                matchesFilter = item.target === filterValue;
+            }
         }
-    }
 
-    return matchesSearch && matchesFilter;
-});
+        if (filterFMSName) {
+            const itemFMSName = String(item.fmsName || "").trim();
+            matchesFilter = matchesFilter && itemFMSName === filterFMSName;
+        }
+
+        return matchesSearch && matchesFilter;
+    });
 
     const handleEmployeeSelect = (employee) => {
-    setFilterType("linkWithName");
-    setFilterValue(employee.value);
-    setShowPersonDropdown(false);
-    setEmployeeSearchTerm("");
-};
+        setFilterType("linkWithName");
+        setFilterValue(employee.value);
+        setShowPersonDropdown(false);
+        setEmployeeSearchTerm("");
+    };
 
-const selectedEmployee = getEmployeeNamesWithImages().find(
-    (emp) => emp.value === filterValue
-);
+    const selectedEmployee = getEmployeeNamesWithImages().find(
+        (emp) => emp.value === filterValue
+    );
 
     if (isLoading) {
         return (
@@ -335,155 +376,255 @@ const selectedEmployee = getEmployeeNamesWithImages().find(
             </div>
 
             {/* Search + Inline Filter */}
-          <div className="bg-white p-3 rounded border space-y-3 relative">
-    <div className="grid md:grid-cols-2 gap-3">
-        {/* Search Input */}
-        <input
-            type="text"
-            placeholder="Search employees, targets, commitments..."
-            className="px-3 py-2 border rounded-md w-full focus:ring-green-500 focus:border-green-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-        />
+            <div className="bg-white p-3 rounded border space-y-3 relative">
+                <div className="grid md:grid-cols-3 gap-3">
+                    {/* Search Input */}
+                    <input
+                        type="text"
+                        placeholder="Search employees, targets, commitments..."
+                        className="px-3 py-2 border rounded-md w-full focus:ring-green-500 focus:border-green-500"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
 
-        {/* Employee Dropdown */}
-        <div className="relative">
-            <div
-                className="border px-3 py-2 rounded w-full focus:ring-green-500 focus:border-green-500 bg-white cursor-pointer flex justify-between items-center"
-                onClick={() => {
-        setShowPersonDropdown(!showPersonDropdown);
-        if (!showPersonDropdown) {
-            setEmployeeSearchTerm(""); // Open होने पर search clear करें
-        }
-    }}
-            >
-                {selectedEmployee ? (
-                    <div className="flex items-center">
-                        {selectedEmployee.imageUrl ? (
-                            <ImgWithFallback
-                                src={selectedEmployee.imageUrl}
-                                alt={selectedEmployee.displayName}
-                                name={selectedEmployee.displayName}
-                                className="w-6 h-6 rounded-full mr-2"
-                                fallbackElement={
-                                    <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                                        <span className="text-xs">
-                                            {selectedEmployee.displayName?.charAt(0) || "?"}
-                                        </span>
-                                    </div>
+
+                    <div className="relative">
+                        <div
+                            className="border px-3 py-2 rounded w-full focus:ring-green-500 focus:border-green-500 bg-white cursor-pointer flex justify-between items-center"
+                            onClick={() => {
+                                setShowPersonDropdown(!showPersonDropdown);
+                                if (!showPersonDropdown) {
+                                    setEmployeeSearchTerm(""); // Open होने पर search clear करें
                                 }
-                            />
-                        ) : (
-                            <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                                <span className="text-xs">
-                                    {selectedEmployee.displayName?.charAt(0) || "?"}
-                                </span>
+                            }}
+                        >
+                            {selectedEmployee ? (
+                                <div className="flex items-center">
+                                    {selectedEmployee.imageUrl ? (
+                                        <ImgWithFallback
+                                            src={selectedEmployee.imageUrl}
+                                            alt={selectedEmployee.displayName}
+                                            name={selectedEmployee.displayName}
+                                            className="w-6 h-6 rounded-full mr-2"
+                                            fallbackElement={
+                                                <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                                                    <span className="text-xs">
+                                                        {selectedEmployee.displayName?.charAt(0) || "?"}
+                                                    </span>
+                                                </div>
+                                            }
+                                        />
+                                    ) : (
+                                        <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                                            <span className="text-xs">
+                                                {selectedEmployee.displayName?.charAt(0) || "?"}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <span>{selectedEmployee.displayName}</span>
+                                </div>
+                            ) : (
+                                <span>All Employees</span>
+                            )}
+                            <svg
+                                className={`w-4 h-4 ml-2 transition-transform ${showPersonDropdown ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </div>
+
+                        {showPersonDropdown && (
+                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                {/* Search Input in Dropdown */}
+                                <div className="sticky top-0 bg-white p-2 border-b z-20">
+                                    <input
+                                        type="text"
+                                        placeholder="Search employees..."
+                                        className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        onClick={(e) => e.stopPropagation()}
+                                        value={employeeSearchTerm}
+                                        onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div
+                                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => {
+                                        handleEmployeeSelect({
+                                            value: "",
+                                            displayName: "All Employees",
+                                        });
+                                        setEmployeeSearchTerm(""); // Search clear करें
+                                    }}
+                                >
+                                    All Employees
+                                </div>
+
+                                {getFilteredEmployeeNames().length > 0 ? (
+                                    getFilteredEmployeeNames().map((employee) => (
+                                        <div
+                                            key={employee.value}
+                                            className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                                            onClick={() => {
+                                                handleEmployeeSelect(employee);
+                                                setEmployeeSearchTerm(""); // Search clear करें
+                                            }}
+                                        >
+                                            {employee.imageUrl ? (
+                                                <ImgWithFallback
+                                                    src={employee.imageUrl}
+                                                    alt={employee.displayName}
+                                                    name={employee.displayName}
+                                                    className="w-6 h-6 rounded-full mr-2"
+                                                    fallbackElement={
+                                                        <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                                                            <span className="text-xs">
+                                                                {employee.displayName?.charAt(0) || "?"}
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                />
+                                            ) : (
+                                                <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                                                    <span className="text-sm">
+                                                        {employee.displayName?.charAt(0) || "?"}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <span className="truncate">{employee.displayName}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-500">
+                                        No employees found for "{employeeSearchTerm}"
+                                    </div>
+                                )}
                             </div>
                         )}
-                        <span>{selectedEmployee.displayName}</span>
                     </div>
-                ) : (
-                    <span>All Employees</span>
-                )}
-                <svg
-                    className={`w-4 h-4 ml-2 transition-transform ${showPersonDropdown ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+
+                    <div className="relative">
+                        <div
+                            className="border px-3 py-2 rounded w-full focus:ring-green-500 focus:border-green-500 bg-white cursor-pointer flex justify-between items-center"
+                            onClick={() => {
+                                setIsFMSDropdownOpen(!isFMSDropdownOpen);
+                                setIsNameDropdownOpen(false);
+                                setShowPersonDropdown(false);
+                                if (!isFMSDropdownOpen) {
+                                    setFmsSearchQuery(""); // Open होने पर search clear करें
+                                }
+                            }}
+                        >
+                            <span className="truncate">
+                                {filterFMSName || "All FMS Names"}
+                            </span>
+                            <svg
+                                className={`w-4 h-4 ml-2 transition-transform flex-shrink-0 ${isFMSDropdownOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </div>
+
+                        {isFMSDropdownOpen && (
+                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                {/* Search Input in Dropdown */}
+                                <div className="sticky top-0 bg-white p-2 border-b z-20">
+                                    <input
+                                        type="text"
+                                        placeholder="Search FMS names..."
+                                        className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        onClick={(e) => e.stopPropagation()}
+                                        value={fmsSearchQuery}
+                                        onChange={(e) => setFmsSearchQuery(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div
+                                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => {
+                                        setFilterFMSName("");
+                                        setIsFMSDropdownOpen(false);
+                                        setFmsSearchQuery("");
+                                    }}
+                                >
+                                    All FMS Names
+                                </div>
+
+                                {getFilteredFMSNames().length > 0 ? (
+                                    getFilteredFMSNames().map((fmsName) => (
+                                        <div
+                                            key={fmsName}
+                                            className="p-2 hover:bg-gray-100 cursor-pointer truncate"
+                                            onClick={() => {
+                                                setFilterFMSName(fmsName);
+                                                setIsFMSDropdownOpen(false);
+                                                setFmsSearchQuery("");
+                                            }}
+                                            title={fmsName}
+                                        >
+                                            {fmsName}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-500">
+                                        No FMS names found for "{fmsSearchQuery}"
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                </div>
+
+
+
+
             </div>
 
-         {showPersonDropdown && (
-    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-        {/* Search Input in Dropdown */}
-        <div className="sticky top-0 bg-white p-2 border-b z-20">
-            <input
-                type="text"
-                placeholder="Search employees..."
-                className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                onClick={(e) => e.stopPropagation()}
-                value={employeeSearchTerm}
-                onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                autoFocus
-            />
-        </div>
-        
-        <div
-            className="p-2 hover:bg-gray-100 cursor-pointer"
-            onClick={() => {
-                handleEmployeeSelect({
-                    value: "",
-                    displayName: "All Employees",
-                });
-                setEmployeeSearchTerm(""); // Search clear करें
-            }}
-        >
-            All Employees
-        </div>
-        
-        {getFilteredEmployeeNames().length > 0 ? (
-            getFilteredEmployeeNames().map((employee) => (
-                <div
-                    key={employee.value}
-                    className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                    onClick={() => {
-                        handleEmployeeSelect(employee);
-                        setEmployeeSearchTerm(""); // Search clear करें
-                    }}
-                >
-                    {employee.imageUrl ? (
-                        <ImgWithFallback
-                            src={employee.imageUrl}
-                            alt={employee.displayName}
-                            name={employee.displayName}
-                            className="w-6 h-6 rounded-full mr-2"
-                            fallbackElement={
-                                <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                                    <span className="text-xs">
-                                        {employee.displayName?.charAt(0) || "?"}
-                                    </span>
-                                </div>
-                            }
-                        />
-                    ) : (
-                        <div className="w-6 h-6 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                            <span className="text-sm">
-                                {employee.displayName?.charAt(0) || "?"}
-                            </span>
-                        </div>
-                    )}
-                    <span className="truncate">{employee.displayName}</span>
-                </div>
-            ))
-        ) : (
-            <div className="p-4 text-center text-gray-500">
-                No employees found for "{employeeSearchTerm}"
-            </div>
-        )}
-    </div>
-)}
-        </div>
-    </div>
-</div>
+
 
             {/* Records Table */}
             {filteredTasks.length > 0 ? (
                 <div className="bg-white rounded-lg border shadow-sm p-4 relative">
                     <div className="mb-3">
                         <h2 className="text-lg font-semibold text-gray-800">
-                            {filterValue
-                                ? `Showing ${filterType === "target" ? "Target" : "Employee"}: ${selectedEmployee?.displayName || filterValue
-                                }`
-                                : "Employee Performance Data"}
+                            {filterFMSName
+                                ? `Showing FMS: ${filterFMSName}`
+                                : filterValue
+                                    ? `Showing ${filterType === "target" ? "Target" : "Employee"}: ${selectedEmployee?.displayName || filterValue}`
+                                    : "Employee Performance Data"
+                            }
                         </h2>
-
+                        {(filterFMSName || filterValue) && (
+                            <button
+                                onClick={() => {
+                                    setFilterFMSName("");
+                                    setFilterValue("");
+                                    setFilterType("linkWithName");
+                                }}
+                                className="mt-2 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            >
+                                Clear Filter
+                            </button>
+                        )}
                     </div>
 
                     {/* Scrollable table container */}
@@ -506,8 +647,8 @@ const selectedEmployee = getEmployeeNamesWithImages().find(
                                                     verticalAlign: 'top'
                                                 }}
                                             >
-                                                <div 
-                                                    className="leading-tight text-center break-words hyphens-auto" 
+                                                <div
+                                                    className="leading-tight text-center break-words hyphens-auto"
                                                     style={{
                                                         wordBreak: 'break-word',
                                                         overflowWrap: 'break-word',
@@ -623,11 +764,12 @@ const selectedEmployee = getEmployeeNamesWithImages().find(
                     <p className="text-gray-400 text-sm mt-2">
                         {searchTerm || filterValue ? "Try adjusting your search or filter criteria." : "Please check your data source"}
                     </p>
-                    {(searchTerm || filterValue) && (
+                    {(searchTerm || filterValue || filterFMSName) && (
                         <button
                             onClick={() => {
                                 setSearchTerm("");
                                 setFilterValue("");
+                                setFilterFMSName("");
                                 setFilterType("linkWithName");
                             }}
                             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
