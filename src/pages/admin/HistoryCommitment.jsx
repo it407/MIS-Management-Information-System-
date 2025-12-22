@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Filter, Users, Target, Trash2 } from "lucide-react";
-import { employees } from "../../data/mockData";
+
+// Google Apps Script Web App URL
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxsivpBFRp-nkwL2tlmVRUNyW3U554AzguV3OQrYIjDBCh_G5cOG47_NWMHWOamOQY4/exec";
+const SPREADSHEET_ID = "1t_-LmxTDhiibPo2HaBZIQJvXOBz_vQ_zsv2f8MhhdGM";
+const SHEET_NAME = "Data";
 
 const AdminHistoryCommitment = () => {
   const [dateRange, setDateRange] = useState({
@@ -11,14 +15,112 @@ const AdminHistoryCommitment = () => {
   const [selectedTarget, setSelectedTarget] = useState("all");
   const [historyData, setHistoryData] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load history from localStorage on mount
+  // Fetch data from Google Sheets
   useEffect(() => {
-    const saved = localStorage.getItem("commitmentHistory");
-    if (saved) {
-      const parsedData = JSON.parse(saved);
-      setHistoryData(parsedData);
-    }
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${WEB_APP_URL}?action=getUsers&sheetName=${SHEET_NAME}&spreadsheetId=${SPREADSHEET_ID}`
+        );
+        const data = await response.json();
+        
+        if (data.status === "success" && data.users) {
+          // Transform Google Sheets data to match our component structure
+          const transformedHistory = data.users
+            .filter(user => user['Person Name'] && user['Target']) // Filter out empty rows
+            .map((user, index) => {
+              // Handle potential missing image - using placeholder if not available
+              let personImage = "";
+              if (user['Link With Name']) {
+                // Try to extract image URL from "Link With Name" column
+                const linkParts = user['Link With Name'].toString().split(',');
+                if (linkParts.length > 1) {
+                  personImage = linkParts[0]?.trim();
+                }
+              }
+              
+              // If no image found, use a placeholder based on name
+              if (!personImage) {
+                personImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(user['Person Name'] || 'User')}&background=random`;
+              }
+              
+              // Extract commitment data from relevant columns
+              const target = parseInt(user['Target']) || 0;
+              const commitment = parseInt(user['Next week Commintment ']) || 0; // Using Column O
+              const plannedWorkNotDone = parseInt(user['Planned % Work Not Done']) || 0; // Using Column T
+              const plannedWorkNotDoneOnTime = parseInt(user['Planned % Work Not Done On Time']) || 0; // Using Column U
+              const startDate = user['Start Date'] || '';
+              const endDate = user['End Date'] || '';
+              
+              return {
+                id: `record-${index + 1}`,
+                employeeId: user['Employee ID'] || `emp-${String(index + 1).padStart(3, '0')}`,
+                name: user['Person Name'] || 'Unknown',
+                department: user['Department'] || 'N/A',
+                target: target,
+                commitment: Math.min(commitment, 100), // Ensure commitment doesn't exceed 100%
+                nextWeekPlannedWorkNotDone: Math.min(plannedWorkNotDone, 100),
+                nextWeekPlannedWorkNotDoneOnTime: Math.min(plannedWorkNotDoneOnTime, 100),
+                dateStart: user['Total Achievement'] || "",
+                dateEnd: user['Week Pending Task'] || "",
+                submittedAt: new Date().toISOString(), // Use current time as submitted time
+                personImage: personImage,
+                // Additional fields from sheet
+                taskName: user['Task Name'] || '',
+                fmsName: user['FMS Name'] || '',
+                gmailId: user['Gmail ID'] || '',
+                totalAchievement: parseInt(user['Total Achievement']) || 0,
+                percentWorkDone: parseInt(user['% Work Done']) || 0,
+                percentWorkDoneOnTime: parseInt(user['% Work Done On Time']) || 0,
+                todayTask: parseInt(user['Today Task']) || 0
+              };
+            });
+          
+          setHistoryData(transformedHistory);
+          
+          // Create unique employees list
+          const uniqueEmployees = Array.from(
+            new Map(
+              transformedHistory.map(record => [record.employeeId, {
+                id: record.employeeId,
+                name: record.name,
+                department: record.department,
+                image: record.personImage
+              }])
+            ).values()
+          );
+          
+          setEmployees(uniqueEmployees);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Fallback: load from localStorage if API fails
+        const saved = localStorage.getItem("commitmentHistory");
+        if (saved) {
+          const parsedData = JSON.parse(saved);
+          setHistoryData(parsedData);
+          // Extract employees from local storage data
+          const localEmployees = Array.from(
+            new Map(
+              parsedData.map(record => [record.employeeId, {
+                id: record.employeeId,
+                name: record.name,
+                department: record.department
+              }])
+            ).values()
+          );
+          setEmployees(localEmployees);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Filter data whenever filters change
@@ -80,6 +182,7 @@ const AdminHistoryCommitment = () => {
     if (window.confirm("Are you sure you want to delete this record?")) {
       const updatedHistory = historyData.filter((_, i) => i !== index);
       setHistoryData(updatedHistory);
+      // Also save to localStorage for persistence
       localStorage.setItem("commitmentHistory", JSON.stringify(updatedHistory));
     }
   };
@@ -118,22 +221,32 @@ const AdminHistoryCommitment = () => {
   const stats = calculateStats();
   const getHistoryIndex = (filteredRecord) => {
     return historyData.findIndex(
-      (rec) =>
-        rec.employeeId === filteredRecord.employeeId &&
-        rec.dateStart === filteredRecord.dateStart &&
-        rec.dateEnd === filteredRecord.dateEnd
+      (rec) => rec.id === filteredRecord.id
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Loading commitment data from Google Sheets...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 justify-between items-start sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-gray-800 lg:text-2xl">
+          <h1 className="text-xl font-bold text-blue-600 lg:text-2xl">
             History Commitment
           </h1>
-        
+          {/* <p className="mt-1 text-sm text-gray-500">
+            Showing {filteredHistory.length} records from Google Sheets
+          </p> */}
         </div>
       </div>
 
@@ -150,39 +263,8 @@ const AdminHistoryCommitment = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Start Date */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Start Date
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 w-4 h-4 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
-              <input
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) => handleDateChange("startDate", e.target.value)}
-                className="py-2 pr-3 pl-10 w-full text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* End Date */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              End Date
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 w-4 h-4 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
-              <input
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) => handleDateChange("endDate", e.target.value)}
-                className="py-2 pr-3 pl-10 w-full text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
+        {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"> */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Employee Filter */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -234,9 +316,9 @@ const AdminHistoryCommitment = () => {
           <h2 className="text-lg font-semibold text-gray-800">
             Commitment History
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          {/* <p className="mt-1 text-sm text-gray-500">
             Showing {filteredHistory.length} records for the selected period
-          </p>
+          </p> */}
         </div>
 
         {/* Desktop Table */}
@@ -254,13 +336,13 @@ const AdminHistoryCommitment = () => {
                   Department
                 </th>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                  Target
+                   Total Target
                 </th>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                  Week Start
+               Total Achievement
                 </th>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                  Week End
+                  Week Pending Task
                 </th>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                   Planned % Work Not Done
@@ -271,12 +353,12 @@ const AdminHistoryCommitment = () => {
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                   Commitment
                 </th>
-                <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                {/* <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                   Submitted
                 </th>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                   Action
-                </th>
+                </th> */}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -292,15 +374,22 @@ const AdminHistoryCommitment = () => {
                   );
 
                   return (
-                    <tr key={idx} className="hover:bg-gray-50">
+                    <tr key={record.id} className="hover:bg-gray-50">
                       <td className="px-3 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {record.employeeId}
                         </div>
                       </td>
                       <td className="px-3 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {record.name}
+                        <div className="flex items-center">
+                          <img 
+                            src={record.personImage} 
+                            alt={record.name}
+                            className="w-8 h-8 rounded-full object-cover mr-3"
+                          />
+                          <div className="text-sm font-medium text-gray-900">
+                            {record.name}
+                          </div>
                         </div>
                       </td>
                       <td className="px-3 py-4 text-sm text-gray-600 whitespace-nowrap">
@@ -309,11 +398,11 @@ const AdminHistoryCommitment = () => {
                       <td className="px-3 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                         {record.target}%
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-900 whitespace-nowrap">
-                        {record.dateStart}
+                      <td className="px-3 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                        {record.dateStart}%
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-900 whitespace-nowrap">
-                        {record.dateEnd}
+                      <td className="px-3 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                        {record.dateEnd}%
                       </td>
                       <td className="px-3 py-4 whitespace-nowrap">
                         <div className="flex gap-2 items-center">
@@ -366,7 +455,7 @@ const AdminHistoryCommitment = () => {
                           {record.commitment}%
                         </span>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap">
+                      {/* <td className="px-3 py-4 whitespace-nowrap">
                         <div className="text-xs text-gray-600">
                           <div>{formattedDate}</div>
                           <div className="text-gray-500">{formattedTime}</div>
@@ -380,7 +469,7 @@ const AdminHistoryCommitment = () => {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   );
                 })
@@ -417,22 +506,29 @@ const AdminHistoryCommitment = () => {
               );
 
               return (
-                <div key={idx} className="p-4 bg-white transition-colors hover:bg-gray-50">
+                <div key={record.id} className="p-4 bg-white transition-colors hover:bg-gray-50">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex flex-1 gap-3 items-center min-w-0">
-                      <div className="text-sm text-gray-600">
-                        ID: {record.employeeId}
+                      <img 
+                        src={record.personImage} 
+                        alt={record.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm text-gray-600">
+                          ID: {record.employeeId}
+                        </div>
+                        <div className="text-base font-semibold text-gray-900 truncate">{record.name}</div>
+                        <div className="text-sm text-gray-500">{record.department}</div>
                       </div>
-                      <div className="text-base font-semibold text-gray-900 truncate">{record.name}</div>
-                      <span className="flex-shrink-0 text-sm text-gray-500">{record.department}</span>
                     </div>
-                    <button
+                    {/* <button
                       onClick={() => handleDeleteRecord(historyIndex)}
                       className="flex-shrink-0 text-red-600 transition-colors hover:text-red-900"
                       title="Delete record"
                     >
                       <Trash2 className="w-5 h-5" />
-                    </button>
+                    </button> */}
                   </div>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
@@ -441,11 +537,11 @@ const AdminHistoryCommitment = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Week Start:</span>
-                      <span className="text-gray-900">{record.dateStart}</span>
+                      <span className="text-gray-900">{record.dateStart || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Week End:</span>
-                      <span className="text-gray-900">{record.dateEnd}</span>
+                      <span className="text-gray-900">{record.dateEnd || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                       <span className="text-gray-600">Planned Work Not Done:</span>
@@ -497,13 +593,13 @@ const AdminHistoryCommitment = () => {
                         {record.commitment}%
                       </span>
                     </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200">
+                    {/* <div className="flex justify-between pt-2 border-t border-gray-200">
                       <span className="text-gray-600">Submitted:</span>
                       <div className="text-xs text-right">
                         <div className="font-medium text-gray-900">{formattedDate}</div>
                         <div className="text-gray-500">{formattedTime}</div>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               );

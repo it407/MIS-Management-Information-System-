@@ -89,18 +89,7 @@ const AdminLayout = () => {
         >
           <div className="h-full overflow-y-auto mobile-scroll">
             <nav className="p-4 sm:p-5 space-y-2">
-              <Link
-                to="/admin/dashboard"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm sm:text-base font-medium ${
-                  isActive('/admin/dashboard')
-                    ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-                onClick={closeSidebar}
-              >
-                <LayoutDashboard size={20} className="shrink-0" />
-                <span className="truncate">Dashboard</span>
-              </Link>
+             
                <Link
                 to="/admin/department"
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm sm:text-base font-medium ${
@@ -110,8 +99,22 @@ const AdminLayout = () => {
                 }`}
                 onClick={closeSidebar}
               >
+                <LayoutDashboard size={20} className="shrink-0" />
+                {/* <span className="truncate">Department</span> */}
+                <span className="truncate">Dashboard</span>
+              </Link>
+               <Link
+                to="/admin/dashboard"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm sm:text-base font-medium ${
+                  isActive('/admin/dashboard')
+                    ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+                onClick={closeSidebar}
+              >
                 <LineChart size={20} className="shrink-0" />
-                <span className="truncate">Department</span>
+                {/* <span className="truncate">Dashboard</span> */}
+                <span className="truncate">Graph Analysis</span>
               </Link>
               <Link
                 to="/admin/history-commitment"

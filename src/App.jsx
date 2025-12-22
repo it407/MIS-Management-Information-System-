@@ -13,6 +13,10 @@ import UserLayout from './layouts/UserLayout';
 import NotFound from './pages/NotFound';
 import Report from './pages/admin/Report';
 
+
+
+import KPiForm from './pages/user/KpiFormfill';
+
 function App() {
   const { user, loading } = useAuth();
 
@@ -67,6 +71,7 @@ function App() {
       >
         <Route index element={<Navigate to="/user/dashboard" replace />} />
         <Route path="dashboard" element={<UserDashboard />} />
+        <Route path="kpi-form-fill" element={<KPiForm />} />
         <Route path="kpi-kra" element={<UserKpiKra />} />
       </Route>
       

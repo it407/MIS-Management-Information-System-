@@ -101,7 +101,7 @@ const UserLayout = () => {
                 <LayoutDashboard size={20} className="shrink-0" />
                 <span className="truncate">Dashboard</span>
               </Link>
-              <Link
+              {/* <Link
                 to="/user/kpi-kra"
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm sm:text-base font-medium ${
                   isActive('/user/kpi-kra')
@@ -112,6 +112,18 @@ const UserLayout = () => {
               >
                 <LineChart size={20} className="shrink-0" />
                 <span className="truncate">KPI & KRA</span>
+              </Link> */}
+              <Link
+                to="/user/kpi-form-fill"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm sm:text-base font-medium ${
+                  isActive('/user/kpi-form-fill')
+                    ? 'bg-green-50 text-green-600 border-r-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+                onClick={closeSidebar}
+              >
+                <LineChart size={20} className="shrink-0" />
+                <span className="truncate">KPI & KRA Form Fill</span>
               </Link>
             </nav>
           </div>
