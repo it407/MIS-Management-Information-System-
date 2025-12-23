@@ -322,9 +322,13 @@ const AdminHistoryCommitment = () => {
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden overflow-x-auto lg:block">
+        {/* <div className="hidden overflow-x-auto lg:block"> */}
+        <div className="hidden lg:block overflow-x-auto overflow-y-auto max-h-96">
+
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            {/* <thead className="bg-gray-50"> */}
+            <thead className="bg-gray-50 sticky top-0 z-20">
+
               <tr>
                 <th className="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                   Employee ID

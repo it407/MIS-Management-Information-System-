@@ -167,7 +167,7 @@ const AdminTodayTasks = () => {
 
 
         {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"> */}
-<div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
           {/* Total Persons Card */}
           <div className="rounded-lg shadow-sm p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
@@ -255,56 +255,56 @@ const AdminTodayTasks = () => {
 
 
         {/* Search and Filter Bar */}
-   <div className="bg-white rounded shadow-sm p-4 mb-4">
-  <div className="flex flex-col gap-3 md:flex-row md:gap-3">
-    {/* Search Input */}
-    <div className="w-full md:flex-1 relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <input
-        type="text"
-        placeholder="Search by task, person, or FMS name..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-      />
-    </div>
+        <div className="bg-white rounded shadow-sm p-4 mb-4">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-3">
+            {/* Search Input */}
+            <div className="w-full md:flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by task, person, or FMS name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
 
-    {/* Filters Container */}
-    <div className="grid grid-cols-2 gap-3 md:flex md:gap-3">
-      {/* Person Filter */}
-      <div className="w-full md:w-56">
-        <select
-          value={personFilter}
-          onChange={(e) => setPersonFilter(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 appearance-none bg-white"
-        >
-          <option value="all">All Persons</option>
-          {persons.map((person) => (
-            <option key={person} value={person}>
-              {person}
-            </option>
-          ))}
-        </select>
-      </div>
+            {/* Filters Container */}
+            <div className="grid grid-cols-2 gap-3 md:flex md:gap-3">
+              {/* Person Filter */}
+              <div className="w-full md:w-56">
+                <select
+                  value={personFilter}
+                  onChange={(e) => setPersonFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 appearance-none bg-white"
+                >
+                  <option value="all">All Persons</option>
+                  {persons.map((person) => (
+                    <option key={person} value={person}>
+                      {person}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      {/* FMS Name Filter */}
-      <div className="w-full md:w-56">
-        <select
-          value={fmsFilter}
-          onChange={(e) => setFmsFilter(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 appearance-none bg-white"
-        >
-          <option value="all">All FMS Names</option>
-          {fmsNames.map((fms) => (
-            <option key={fms} value={fms}>
-              {fms}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  </div>
-</div>
+              {/* FMS Name Filter */}
+              <div className="w-full md:w-56">
+                <select
+                  value={fmsFilter}
+                  onChange={(e) => setFmsFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 appearance-none bg-white"
+                >
+                  <option value="all">All FMS Names</option>
+                  {fmsNames.map((fms) => (
+                    <option key={fms} value={fms}>
+                      {fms}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
 
 
         {/* Summary Cards */}
@@ -322,9 +322,14 @@ const AdminTodayTasks = () => {
           {filteredTasks.length > 0 ? (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
+              {/* <div className="hidden md:block overflow-x-auto"> */}
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
+
+
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  {/* <thead className="bg-gray-50"> */}
+                  <thead className="bg-gray-50 sticky top-0 z-20">
+
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Employee ID

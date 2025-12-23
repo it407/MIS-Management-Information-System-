@@ -49,22 +49,6 @@ const AdminDashboard = () => {
   });
 
 
-
-
-
-  //   // Line 135 के बाद ये add करें:
-  // const filteredDepartmentsForChart = departments.filter(dept => {
-  //   // If filterDepartment is set, only show that department
-  //   if (filterDepartment && filterDepartment !== "") {
-  //     return dept.department === filterDepartment;
-  //   }
-  //   return true; // Show all departments if no filter
-  // });
-
-  // // Prepare chart data
-  // // const departmentChartData = filteredDepartmentsForChart.map(dept => dept.score);
-  // const departmentChartLabels = filteredDepartmentsForChart.map(dept => dept.department);
-
   // Line 243 के बाद:
   const uniqueDepartmentsForFilter = [
     ...new Set(departments.map(dept => dept.department)),
@@ -528,8 +512,6 @@ const AdminDashboard = () => {
   };
 
 
-
-
   const handleSubmit = async () => {
     try {
       const selectedEmployeeData = selectedEmployees.map((empId) => {
@@ -864,7 +846,9 @@ transition-colors"
         {/* Desktop Table */}
         <div className="hidden md:block overflow-y-auto max-h-96">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            {/* <thead className="bg-gray-50"> */}
+            <thead className="bg-gray-50 sticky top-0 z-20">
+
               <tr>
                 <th className="w-12 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
